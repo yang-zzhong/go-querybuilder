@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	helpers "github.com/yang-zzhong/go-helpers"
+	str "strings"
 )
 
 const (
@@ -31,8 +32,8 @@ type BaseWhere struct {
 	Query *Builder
 	Array []string
 
-	id          string
-	values      []interface{}
+	id       string
+	values   []interface{}
 	modifier Modifier
 }
 
@@ -82,5 +83,5 @@ func (where *BaseWhere) String() string {
 		return where.modifier.QuoteName(where.Field) + " LIKE " + value
 	}
 	field := where.modifier.QuoteName(where.Field)
-	return helpers.Implode([]string{field, where.Op, value}, " ")
+	return str.Join([]string{field, where.Op, value}, " ")
 }

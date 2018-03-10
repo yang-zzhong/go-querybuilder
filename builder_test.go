@@ -10,7 +10,7 @@ func TestForMysql(t *T) {
 	if "SELECT `*` FROM `users`" != builder.ForQuery() {
 		t.Error("From Error")
 	}
-	builder.Select([]string{"name", "age"})
+	builder.Select("name", "age")
 	if "SELECT `name`, `age` FROM `users`" != builder.ForQuery() {
 		t.Error("Select Error")
 	}
