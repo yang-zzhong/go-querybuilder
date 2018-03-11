@@ -31,7 +31,7 @@ type Condition struct {
 
 type Builder struct {
 	// users
-	table string
+	tableName string
 
 	conditions []Condition
 
@@ -39,7 +39,7 @@ type Builder struct {
 
 	// ["name", "age"]
 	// ["*"]
-	selects []string
+	selects []column
 
 	//
 	// ["age" => "desc"]
@@ -56,6 +56,8 @@ type Builder struct {
 
 	modifier Modifier
 
+	group string
+
 	replace bool
 }
 
@@ -63,7 +65,7 @@ func NewBuilder(modifier Modifier) *Builder {
 	builder := new(Builder)
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
-	builder.selects = []string{"*"}
+	builder.selects = []column{column{"*", true}}
 	builder.orders = make(map[string]string)
 	builder.whereFactory = NewWF(modifier)
 	builder.values = []interface{}{}
@@ -75,8 +77,8 @@ func NewBuilder(modifier Modifier) *Builder {
 	return builder
 }
 
-func (builder *Builder) From(table string) *Builder {
-	builder.table = table
+func (builder *Builder) From(tableName string) *Builder {
+	builder.tableName = tableName
 	return builder
 }
 
@@ -114,6 +116,9 @@ func (builder *Builder) ForQuery() string {
 	if len(builder.orders) > 0 {
 		sql += handleOrderBy(builder.orders)
 	}
+	if builder.group != "" {
+		sql += " " + builder.group
+	}
 	if builder.limit > -1 {
 		sql += " LIMIT " + strconv.Itoa(builder.limit)
 	}
@@ -128,13 +133,17 @@ func (builder *Builder) ForQuery() string {
 }
 
 func (builder *Builder) QuotedTableName() string {
-	return builder.modifier.QuoteName(builder.table)
+	return builder.modifier.QuoteName(builder.tableName)
 }
 
 func (builder *Builder) QuotedColumns() []string {
 	result := make([]string, len(builder.selects))
 	for i, item := range builder.selects {
-		result[i] = builder.modifier.QuoteName(item)
+		fieldName := item.fieldName
+		if item.quote {
+			fieldName = builder.modifier.QuoteName(item.fieldName)
+		}
+		result[i] = fieldName
 	}
 
 	return result

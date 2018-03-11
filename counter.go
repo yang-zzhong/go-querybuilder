@@ -1,10 +1,6 @@
 package querybuilder
 
-type Counter interface {
-	ForCount() string
-}
-
 func (builder *Builder) ForCount() string {
-	builder.Select("COUNT(1)")
+	builder.Select(E{"COUNT(1) as count"})
 	return builder.ForQuery()
 }

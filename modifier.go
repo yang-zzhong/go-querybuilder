@@ -6,8 +6,7 @@ type Modifier interface {
 	QuoteName(string) string
 }
 
-
-type BaseModifier struct {}
+type BaseModifier struct{}
 
 func (bm *BaseModifier) PrePh() string {
 	return "__@__"
