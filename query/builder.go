@@ -218,7 +218,7 @@ func (builder *BaseBuilder) Query() string {
 	if builder.conditions != nil {
 		sql += " WHERE " + builder.handleWhere()
 	}
-	if builder.orders != nil {
+	if len(builder.orders) > 0 {
 		sql += handleOrderBy(builder.orders)
 	}
 
