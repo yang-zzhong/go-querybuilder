@@ -235,7 +235,22 @@ func (builder *BaseBuilder) Remove() string {
 }
 
 func (builder *BaseBuilder) Update(data map[string]string) string {
-	return ""
+	sql := "UPDATE " + builder.table + " SET "
+	length := len(data)
+	i := 1
+	where := builder.whereFactory.NewEmpty()
+	for field, value := range data {
+		sql += field + "=" + where.QuoteValue(value)
+		if i < length {
+			sql += ", "
+		}
+		i++
+	}
+	if builder.conditions != nil {
+		sql += " WHERE " + builder.handleWhere()
+	}
+
+	return sql
 }
 
 func (builder *BaseBuilder) makeWhere(args []string) Where {

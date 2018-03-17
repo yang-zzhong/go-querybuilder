@@ -10,6 +10,10 @@ type MysqlWhere struct {
 
 type MysqlWhereFactory struct{}
 
+func (factory *MysqlWhereFactory) NewEmpty() Where {
+	return new(MysqlWhere)
+}
+
 func (factory *MysqlWhereFactory) New(args []string) Where {
 	length := len(args)
 	condi := []string{}

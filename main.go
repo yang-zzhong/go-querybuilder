@@ -28,4 +28,19 @@ func main() {
 	builder.OrderBy("age", DESC)
 
 	fmt.Println(builder.Query())
+
+	builder = query.New()
+	builder.From("users")
+	builder.Where("name", "yangzhong")
+	data := make(map[string]string)
+	data["name"] = "yang-zhong"
+	data["age"] = "26"
+
+	fmt.Println(builder.Update(data))
+
+	builder = query.New()
+	builder.From("users")
+	builder.Where("name", "yangzhong")
+
+	fmt.Println(builder.Remove())
 }

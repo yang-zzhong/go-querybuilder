@@ -25,6 +25,7 @@ type Where interface {
 }
 
 type WhereFactory interface {
+	NewEmpty() Where
 	New(args []string) Where
 	NewQuery(field string, op string, builder Builder) Where
 	NewArray(field string, op string, array []string) Where
