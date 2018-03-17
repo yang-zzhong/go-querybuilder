@@ -4,10 +4,16 @@ import (
 	helpers "github.com/yang-zzhong/go-helpers"
 )
 
+//
+// QWhere's callback type
+//
 type QuoteWhere func(builder Builder)
 
 type Builder interface {
-	From(table string) Builder
+
+	// Select Update OR Delete From whitch table
+	From(table_name string) Builder
+
 	// select columns to fetch, default ["*"]
 	Select(cols []string) Builder
 
@@ -15,25 +21,59 @@ type Builder interface {
 	// query.Where(field, value)
 	// query.Where(field, op, value)
 	// # sample
-	//		query.Where("age", 12)
-	//			.Where("name", "like", "%young")
-	//			.Where("age", ">", 12)
+	//		query.Where("age", 12).Where("name", "like", "%young").Where("age", ">", 12)
 	Where(args ...string) Builder
 
+	// quote a group of condition
+	// # sample
+	// 	 query.QWhere(func(query Builder) {
+	// 		query.Where("hello", "world")
+	// 		query.Or().Where("hello", "dlrow")
+	//   })
+	// will generate `(hello = "world" OR hello = "dlrow")`
 	QWhere(call QuoteWhere) Builder
 
-	// query.WhereRaw("age > 18")
+	// set a raw condition
+	// # sample
+	//	query.WhereRaw("name = \"world\"")
 	WhereRaw(condition string) Builder
 
+	// set in condition, the value is another builder, the builder must select a field
+	// #sample
+	//	anotherQuery.Select("id")
+	//	query.WhereInQuery("id", anotherQuery)
 	WhereInQuery(field string, query Builder) Builder
+
+	// same as WhereInQuery
 	WhereNotInQuery(field string, query Builder) Builder
+
+	// set in condition, the vaue is a slice
+	// #sample
+	//	query.WhereIn("name", []string{"狗蛋", "二狗子"})
 	WhereIn(field string, ins []string) Builder
+
+	// same as WhereIn
 	WhereNotIn(field string, ins []string) Builder
+
+	// or connected two conditions
 	Or() Builder
+
+	// and connected two conditions
 	And() Builder
+
+	// order the result
+	// #sample
+	//	query.OrderBy("name", DESC)
+	//	query.OrderBy("age", ASC)
 	OrderBy(filed string, order string) Builder
+
+	// execute select query
 	Query() string
+
+	// execute update query
 	Update(map[string]string) string
+
+	// execute remove query
 	Remove() string
 }
 
@@ -52,15 +92,14 @@ const (
 )
 
 type Condition struct {
-	t  int
-	id string
+	t  int    // condition type
+	id string // condition id
 }
 
 type BaseBuilder struct {
 	// users
 	table string
 
-	// id => type
 	conditions []Condition
 
 	wheres map[string]Where
@@ -98,6 +137,7 @@ func (builder *BaseBuilder) Select(cols []string) Builder {
 }
 
 func (builder *BaseBuilder) OrderBy(field string, order string) Builder {
+	builder.orders[field] = order
 	return builder
 }
 
@@ -178,6 +218,9 @@ func (builder *BaseBuilder) Query() string {
 	if builder.conditions != nil {
 		sql += " WHERE " + builder.handleWhere()
 	}
+	if builder.orders != nil {
+		sql += handleOrderBy(builder.orders)
+	}
 
 	return sql
 }
@@ -239,6 +282,21 @@ func (builder *BaseBuilder) handleWhere() string {
 	}
 
 	return helpers.Implode(wheres, "")
+}
+
+func handleOrderBy(orders map[string]string) string {
+	sql := " ORDER BY "
+	length := len(orders)
+	i := 1
+	for field, order := range orders {
+		sql += field + " " + order
+		if i < length {
+			sql += ", "
+		}
+		i++
+	}
+
+	return sql
 }
 
 func addAnd(wheres []string, last string) []string {

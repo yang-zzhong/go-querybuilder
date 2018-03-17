@@ -24,6 +24,8 @@ func main() {
 		q.Where("article_name", "时间简史")
 		builder.WhereInQuery("id", q)
 	})
+	builder.OrderBy("name", ASC)
+	builder.OrderBy("age", DESC)
 
 	fmt.Println(builder.Query())
 }
