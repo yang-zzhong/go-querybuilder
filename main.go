@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	. "yang-zzhong/database/query"
-	query "yang-zzhong/database/query/mysql"
+	query "yang-zzhong/database/query/pgsql"
 )
 
 func main() {

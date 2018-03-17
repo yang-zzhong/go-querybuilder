@@ -21,7 +21,7 @@ const (
 type Where interface {
 	Id() string
 	String() string
-	QuoteValue(string) string
+	QuoteValue(value string) string
 }
 
 type WhereFactory interface {
@@ -31,12 +31,15 @@ type WhereFactory interface {
 	NewArray(field string, op string, array []string) Where
 }
 
+type QuoteValue func(string) string
+
 type BaseWhere struct {
 	Field string
 	Op    string
 	Value string
 	Query Builder
 	Array []string
+	Qv    QuoteValue
 
 	id string
 }
@@ -54,12 +57,12 @@ func (where *BaseWhere) String() string {
 	case where.Query != nil:
 		value = "(" + where.Query.Query() + ")"
 	case where.Value != "":
-		value = where.QuoteValue(where.Value)
+		value = where.Qv(where.Value)
 	case where.Array != nil:
 		value = "("
 		length := len(where.Array)
 		for i, item := range where.Array {
-			value += where.QuoteValue(item)
+			value += where.Qv(item)
 			if i != length-1 {
 				value += ", "
 			}
@@ -77,5 +80,5 @@ func (where *BaseWhere) String() string {
 }
 
 func (where *BaseWhere) QuoteValue(value string) string {
-	return "\"" + value + "\""
+	return where.Qv(value)
 }

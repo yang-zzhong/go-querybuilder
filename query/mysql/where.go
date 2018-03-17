@@ -11,7 +11,14 @@ type MysqlWhere struct {
 type MysqlWhereFactory struct{}
 
 func (factory *MysqlWhereFactory) NewEmpty() Where {
-	return new(MysqlWhere)
+	baseWhere := new(BaseWhere)
+	baseWhere.Qv = func(value string) string {
+		return "\"" + value + "\""
+	}
+	where := new(MysqlWhere)
+	where.BaseWhere = *baseWhere
+
+	return where
 }
 
 func (factory *MysqlWhereFactory) New(args []string) Where {
@@ -27,6 +34,9 @@ func (factory *MysqlWhereFactory) New(args []string) Where {
 	where.Field = condi[0]
 	where.Op = condi[1]
 	where.Value = condi[2]
+	where.Qv = func(value string) string {
+		return "\"" + value + "\""
+	}
 	mysqlWhere := new(MysqlWhere)
 	mysqlWhere.BaseWhere = *where
 
@@ -38,6 +48,9 @@ func (factory *MysqlWhereFactory) NewQuery(field string, op string, other Builde
 	where.Field = field
 	where.Op = op
 	where.Query = other
+	where.Qv = func(value string) string {
+		return "\"" + value + "\""
+	}
 	mysqlWhere := new(MysqlWhere)
 	mysqlWhere.BaseWhere = *where
 
@@ -49,6 +62,9 @@ func (factory *MysqlWhereFactory) NewArray(field string, op string, array []stri
 	where.Field = field
 	where.Op = op
 	where.Array = array
+	where.Qv = func(value string) string {
+		return "\"" + value + "\""
+	}
 	mysqlWhere := new(MysqlWhere)
 	mysqlWhere.BaseWhere = *where
 
