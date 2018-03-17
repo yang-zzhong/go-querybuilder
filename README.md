@@ -1,6 +1,6 @@
 # A Database Query Builder
 
-```
+```go
 	builder := query.New()
 	builder.From("users")
 	builder.Select([]string{"name", "age", "from"})
