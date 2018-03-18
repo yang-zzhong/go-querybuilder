@@ -74,13 +74,13 @@ type Builder interface {
 	Offset(offset int) Builder
 
 	// execute select query
-	Query() string
+	ForQuery() string
 
 	// execute update query
-	Update(map[string]string) string
+	ForUpdate(map[string]string) string
 
 	// execute remove query
-	Remove() string
+	ForRemove() string
 }
 
 const (
@@ -131,7 +131,7 @@ type BaseBuilder struct {
 func InitBuilder(builder *BaseBuilder, where WhereFactory) {
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
-	builder.selects = []string{}
+	builder.selects = []string{"*"}
 	builder.orders = make(map[string]string)
 	builder.whereFactory = where
 	builder.values = make(map[string]string)
@@ -235,13 +235,13 @@ func (builder *BaseBuilder) Params() map[string]string {
 	return builder.values
 }
 
-func (builder *BaseBuilder) Query() string {
+func (builder *BaseBuilder) ForQuery() string {
 	selects := builder.selects
 	if selects == nil {
 		selects = []string{"*"}
 	}
 	sql := "SELECT " + helpers.Implode(selects, ", ") + " FROM " + builder.table
-	if builder.conditions != nil {
+	if len(builder.conditions) > 0 {
 		sql += " WHERE " + builder.handleWhere()
 	}
 	if len(builder.orders) > 0 {
@@ -257,9 +257,9 @@ func (builder *BaseBuilder) Query() string {
 	return sql
 }
 
-func (builder *BaseBuilder) Remove() string {
+func (builder *BaseBuilder) ForRemove() string {
 	sql := "DELETE FROM " + builder.table
-	if builder.conditions != nil {
+	if len(builder.conditions) > 0 {
 		sql += " WHERE " + builder.handleWhere()
 	}
 	if builder.limit > -1 {
@@ -272,7 +272,7 @@ func (builder *BaseBuilder) Remove() string {
 	return sql
 }
 
-func (builder *BaseBuilder) Update(data map[string]string) string {
+func (builder *BaseBuilder) ForUpdate(data map[string]string) string {
 	sql := "UPDATE " + builder.table + " SET "
 	length := len(data)
 	i := 1
@@ -284,7 +284,7 @@ func (builder *BaseBuilder) Update(data map[string]string) string {
 		}
 		i++
 	}
-	if builder.conditions != nil {
+	if len(builder.conditions) > 0 {
 		sql += " WHERE " + builder.handleWhere()
 	}
 	if builder.limit > -1 {

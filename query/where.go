@@ -12,8 +12,8 @@ const (
 	LT      string = "<"
 	LTE     string = "<="
 	LIKE    string = "LIKE"
-	NULL    string = "NULL"
-	NOTNULL string = "NOT NULL"
+	NULL    string = "IS NULL"
+	NOTNULL string = "IS NOT NULL"
 	IN      string = "IN"
 	NOTIN   string = "NOT IN"
 )
@@ -52,7 +52,7 @@ func (where *BaseWhere) String() string {
 	value := ""
 	switch {
 	case where.Query != nil:
-		value = "(" + where.Query.Query() + ")"
+		value = "(" + where.Query.ForQuery() + ")"
 		where.values = where.Query.Params()
 	case where.Value != "":
 		name := where.name(where.Field)
