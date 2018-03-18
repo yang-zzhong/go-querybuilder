@@ -17,6 +17,7 @@ type Builder interface {
 	// select columns to fetch, default ["*"]
 	Select(cols []string) Builder
 
+	Params() map[string]string
 	// set query condition
 	// query.Where(field, value)
 	// query.Where(field, op, value)
@@ -114,6 +115,8 @@ type BaseBuilder struct {
 	orders map[string]string
 
 	whereFactory WhereFactory
+
+	values map[string]string
 }
 
 func InitBuilder(builder *BaseBuilder, where WhereFactory) {
@@ -122,17 +125,16 @@ func InitBuilder(builder *BaseBuilder, where WhereFactory) {
 	builder.selects = []string{}
 	builder.orders = make(map[string]string)
 	builder.whereFactory = where
+	builder.values = make(map[string]string)
 }
 
 func (builder *BaseBuilder) From(table string) Builder {
 	builder.table = table
-
 	return builder
 }
 
 func (builder *BaseBuilder) Select(cols []string) Builder {
 	builder.selects = cols
-
 	return builder
 }
 
@@ -208,6 +210,10 @@ func (builder *BaseBuilder) WhereNotIn(field string, ins []string) Builder {
 	return builder
 }
 
+func (builder *BaseBuilder) Params() map[string]string {
+	return builder.values
+}
+
 func (builder *BaseBuilder) Query() string {
 
 	selects := builder.selects
@@ -238,9 +244,9 @@ func (builder *BaseBuilder) Update(data map[string]string) string {
 	sql := "UPDATE " + builder.table + " SET "
 	length := len(data)
 	i := 1
-	where := builder.whereFactory.NewEmpty()
 	for field, value := range data {
-		sql += field + "=" + where.QuoteValue(value)
+		sql += field + "= @" + field
+		builder.values[field] = value
 		if i < length {
 			sql += ", "
 		}
@@ -270,13 +276,22 @@ func (builder *BaseBuilder) handleWhere() string {
 	for _, condi := range builder.conditions {
 		length := len(wheres)
 		if length == 0 {
-			wheres = append(wheres, builder.wheres[condi.id].String())
+			where := builder.wheres[condi.id]
+			wheres = append(wheres, where.String())
+			for name, value := range where.Params() {
+				builder.values[name] = value
+			}
 			continue
 		}
-		last := wheres[len(wheres)-1]
+		last := wheres[length-1]
 		if condi.t == T_WHERE {
+			where := builder.wheres[condi.id]
 			wheres = addAnd(wheres, last)
-			wheres = append(wheres, builder.wheres[condi.id].String())
+			wheres = append(wheres, where.String())
+			for name, value := range where.Params() {
+				builder.values[name] = value
+			}
+
 			continue
 		}
 		where := ""

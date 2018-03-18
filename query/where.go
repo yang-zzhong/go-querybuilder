@@ -21,17 +21,8 @@ const (
 type Where interface {
 	Id() string
 	String() string
-	QuoteValue(value string) string
+	Params() map[string]string
 }
-
-type WhereFactory interface {
-	NewEmpty() Where
-	New(args []string) Where
-	NewQuery(field string, op string, builder Builder) Where
-	NewArray(field string, op string, array []string) Where
-}
-
-type QuoteValue func(string) string
 
 type BaseWhere struct {
 	Field string
@@ -39,15 +30,21 @@ type BaseWhere struct {
 	Value string
 	Query Builder
 	Array []string
-	Qv    QuoteValue
 
-	id string
+	id     string
+	values map[string]string
+}
+
+func InitBaseWhere(where *BaseWhere) {
+	where.values = make(map[string]string)
+	where.id = helpers.RandString(32)
+}
+
+func (where *BaseWhere) Params() map[string]string {
+	return where.values
 }
 
 func (where *BaseWhere) Id() string {
-	if where.id == "" {
-		where.id = helpers.RandString(32)
-	}
 	return where.id
 }
 
@@ -56,13 +53,18 @@ func (where *BaseWhere) String() string {
 	switch {
 	case where.Query != nil:
 		value = "(" + where.Query.Query() + ")"
+		where.values = where.Query.Params()
 	case where.Value != "":
-		value = where.Qv(where.Value)
+		name := where.name(where.Field)
+		value = "@" + name
+		where.values[name] = where.Value
 	case where.Array != nil:
 		value = "("
 		length := len(where.Array)
 		for i, item := range where.Array {
-			value += where.Qv(item)
+			name := where.name(where.Field + (string)(i))
+			value += "@" + name
+			where.values[name] = item
 			if i != length-1 {
 				value += ", "
 			}
@@ -79,6 +81,6 @@ func (where *BaseWhere) String() string {
 	return helpers.Implode([]string{where.Field, where.Op, value}, " ")
 }
 
-func (where *BaseWhere) QuoteValue(value string) string {
-	return where.Qv(value)
+func (where *BaseWhere) name(field string) string {
+	return field + "-" + helpers.RandString(5)
 }
