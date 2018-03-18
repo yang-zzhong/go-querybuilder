@@ -2,6 +2,7 @@ package query
 
 import (
 	helpers "github.com/yang-zzhong/go-helpers"
+	"strconv"
 )
 
 //
@@ -12,7 +13,7 @@ type QuoteWhere func(builder Builder)
 type Builder interface {
 
 	// Select Update OR Delete From whitch table
-	From(table_name string) Builder
+	From(tableName string) Builder
 
 	// select columns to fetch, default ["*"]
 	Select(cols []string) Builder
@@ -68,6 +69,10 @@ type Builder interface {
 	//	query.OrderBy("age", ASC)
 	OrderBy(filed string, order string) Builder
 
+	Limit(limit int) Builder
+
+	Offset(offset int) Builder
+
 	// execute select query
 	Query() string
 
@@ -117,6 +122,10 @@ type BaseBuilder struct {
 	whereFactory WhereFactory
 
 	values map[string]string
+
+	limit int
+
+	offset int
 }
 
 func InitBuilder(builder *BaseBuilder, where WhereFactory) {
@@ -126,6 +135,8 @@ func InitBuilder(builder *BaseBuilder, where WhereFactory) {
 	builder.orders = make(map[string]string)
 	builder.whereFactory = where
 	builder.values = make(map[string]string)
+	builder.limit = -1
+	builder.offset = -1
 }
 
 func (builder *BaseBuilder) From(table string) Builder {
@@ -210,12 +221,21 @@ func (builder *BaseBuilder) WhereNotIn(field string, ins []string) Builder {
 	return builder
 }
 
+func (builder *BaseBuilder) Limit(limit int) Builder {
+	builder.limit = limit
+	return builder
+}
+
+func (builder *BaseBuilder) Offset(offset int) Builder {
+	builder.offset = offset
+	return builder
+}
+
 func (builder *BaseBuilder) Params() map[string]string {
 	return builder.values
 }
 
 func (builder *BaseBuilder) Query() string {
-
 	selects := builder.selects
 	if selects == nil {
 		selects = []string{"*"}
@@ -227,6 +247,12 @@ func (builder *BaseBuilder) Query() string {
 	if len(builder.orders) > 0 {
 		sql += handleOrderBy(builder.orders)
 	}
+	if builder.limit > -1 {
+		sql += " LIMIT " + strconv.Itoa(builder.limit)
+	}
+	if builder.offset > -1 {
+		sql += " OFFSET " + strconv.Itoa(builder.offset)
+	}
 
 	return sql
 }
@@ -235,6 +261,12 @@ func (builder *BaseBuilder) Remove() string {
 	sql := "DELETE FROM " + builder.table
 	if builder.conditions != nil {
 		sql += " WHERE " + builder.handleWhere()
+	}
+	if builder.limit > -1 {
+		sql += " LIMIT " + strconv.Itoa(builder.limit)
+	}
+	if builder.offset > -1 {
+		sql += " OFFSET " + strconv.Itoa(builder.offset)
 	}
 
 	return sql
@@ -254,6 +286,12 @@ func (builder *BaseBuilder) Update(data map[string]string) string {
 	}
 	if builder.conditions != nil {
 		sql += " WHERE " + builder.handleWhere()
+	}
+	if builder.limit > -1 {
+		sql += " LIMIT " + strconv.Itoa(builder.limit)
+	}
+	if builder.offset > -1 {
+		sql += " OFFSET " + strconv.Itoa(builder.offset)
 	}
 
 	return sql
@@ -291,7 +329,6 @@ func (builder *BaseBuilder) handleWhere() string {
 			for name, value := range where.Params() {
 				builder.values[name] = value
 			}
-
 			continue
 		}
 		where := ""

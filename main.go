@@ -26,6 +26,7 @@ func main() {
 	})
 	builder.OrderBy("name", ASC)
 	builder.OrderBy("age", DESC)
+	builder.Offset(100).Limit(100)
 
 	fmt.Println(builder.Query())
 	fmt.Println(builder.Params())
