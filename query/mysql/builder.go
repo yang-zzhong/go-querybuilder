@@ -8,7 +8,9 @@ type MysqlBuilder struct {
 
 func New() Builder {
 	baseBuilder := new(BaseBuilder)
-	InitBuilder(baseBuilder, new(BaseWhereFactory))
+	whereFactory := new(BaseWhereFactory)
+	whereFactory.Ph = new(MysqlPlaceholder)
+	InitBuilder(baseBuilder, whereFactory, whereFactory.Ph)
 
 	builder := new(MysqlBuilder)
 	builder.BaseBuilder = *baseBuilder

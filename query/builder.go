@@ -18,7 +18,8 @@ type Builder interface {
 	// select columns to fetch, default ["*"]
 	Select(cols []string) Builder
 
-	Params() map[string]string
+	// Params() map[string]string
+	Params() []interface{}
 	// set query condition
 	// query.Where(field, value)
 	// query.Where(field, op, value)
@@ -121,22 +122,26 @@ type BaseBuilder struct {
 
 	whereFactory WhereFactory
 
-	values map[string]string
+	values []interface{}
 
 	limit int
 
 	offset int
+
+	ph Placeholder
 }
 
-func InitBuilder(builder *BaseBuilder, where WhereFactory) {
+func InitBuilder(builder *BaseBuilder, where WhereFactory, ph Placeholder) {
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
 	builder.selects = []string{"*"}
 	builder.orders = make(map[string]string)
 	builder.whereFactory = where
-	builder.values = make(map[string]string)
+	// builder.values = make(map[string]string)
+	builder.values = []interface{}{}
 	builder.limit = -1
 	builder.offset = -1
+	builder.ph = ph
 }
 
 func (builder *BaseBuilder) From(table string) Builder {
@@ -231,8 +236,13 @@ func (builder *BaseBuilder) Offset(offset int) Builder {
 	return builder
 }
 
-func (builder *BaseBuilder) Params() map[string]string {
-	return builder.values
+func (builder *BaseBuilder) Params() []interface{} {
+	result := []interface{}{}
+	for _, val := range builder.values {
+		result = append(result, val)
+	}
+
+	return result
 }
 
 func (builder *BaseBuilder) ForQuery() string {
@@ -277,8 +287,8 @@ func (builder *BaseBuilder) ForUpdate(data map[string]string) string {
 	length := len(data)
 	i := 1
 	for field, value := range data {
-		sql += field + "= @" + field
-		builder.values[field] = value
+		sql += field + "=" + builder.ph.Ph()
+		builder.values = append(builder.values, value)
 		if i < length {
 			sql += ", "
 		}
@@ -316,8 +326,8 @@ func (builder *BaseBuilder) handleWhere() string {
 		if length == 0 {
 			where := builder.wheres[condi.id]
 			wheres = append(wheres, where.String())
-			for name, value := range where.Params() {
-				builder.values[name] = value
+			for _, value := range where.Params() {
+				builder.values = append(builder.values, value)
 			}
 			continue
 		}
@@ -326,8 +336,8 @@ func (builder *BaseBuilder) handleWhere() string {
 			where := builder.wheres[condi.id]
 			wheres = addAnd(wheres, last)
 			wheres = append(wheres, where.String())
-			for name, value := range where.Params() {
-				builder.values[name] = value
+			for _, value := range where.Params() {
+				builder.values = append(builder.values, value)
 			}
 			continue
 		}

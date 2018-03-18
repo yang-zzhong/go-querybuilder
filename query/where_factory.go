@@ -6,7 +6,9 @@ type WhereFactory interface {
 	NewArray(field string, op string, array []string) Where
 }
 
-type BaseWhereFactory struct{}
+type BaseWhereFactory struct {
+	Ph Placeholder
+}
 
 func (factory *BaseWhereFactory) New(args []string) Where {
 	length := len(args)
@@ -18,7 +20,7 @@ func (factory *BaseWhereFactory) New(args []string) Where {
 		condi = args
 	}
 	where := new(BaseWhere)
-	InitBaseWhere(where)
+	InitBaseWhere(where, factory.Ph)
 	where.Field = condi[0]
 	where.Op = condi[1]
 	where.Value = condi[2]
@@ -28,7 +30,7 @@ func (factory *BaseWhereFactory) New(args []string) Where {
 
 func (factory *BaseWhereFactory) NewQuery(field string, op string, other Builder) Where {
 	where := new(BaseWhere)
-	InitBaseWhere(where)
+	InitBaseWhere(where, factory.Ph)
 	where.Field = field
 	where.Op = op
 	where.Query = other
@@ -38,7 +40,7 @@ func (factory *BaseWhereFactory) NewQuery(field string, op string, other Builder
 
 func (factory *BaseWhereFactory) NewArray(field string, op string, array []string) Where {
 	where := new(BaseWhere)
-	InitBaseWhere(where)
+	InitBaseWhere(where, factory.Ph)
 	where.Field = field
 	where.Op = op
 	where.Array = array

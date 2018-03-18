@@ -8,7 +8,9 @@ type PgsqlBuilder struct {
 
 func New() Builder {
 	baseBuilder := new(BaseBuilder)
-	InitBuilder(baseBuilder, new(BaseWhereFactory))
+	whereFactory := new(BaseWhereFactory)
+	whereFactory.Ph = new(PgsqlPlaceholder)
+	InitBuilder(baseBuilder, whereFactory, whereFactory.Ph)
 
 	builder := new(PgsqlBuilder)
 	builder.BaseBuilder = *baseBuilder

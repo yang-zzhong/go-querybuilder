@@ -21,7 +21,7 @@ const (
 type Where interface {
 	Id() string
 	String() string
-	Params() map[string]string
+	Params() []interface{}
 }
 
 type BaseWhere struct {
@@ -31,16 +31,19 @@ type BaseWhere struct {
 	Query Builder
 	Array []string
 
-	id     string
-	values map[string]string
+	id          string
+	values      []interface{}
+	placeholder Placeholder
 }
 
-func InitBaseWhere(where *BaseWhere) {
-	where.values = make(map[string]string)
+func InitBaseWhere(where *BaseWhere, ph Placeholder) {
+	where.values = []interface{}{}
 	where.id = helpers.RandString(32)
+	where.placeholder = ph
 }
 
-func (where *BaseWhere) Params() map[string]string {
+// func (where *BaseWhere) Params() map[string]string {
+func (where *BaseWhere) Params() []interface{} {
 	return where.values
 }
 
@@ -55,16 +58,14 @@ func (where *BaseWhere) String() string {
 		value = "(" + where.Query.ForQuery() + ")"
 		where.values = where.Query.Params()
 	case where.Value != "":
-		name := where.name(where.Field)
-		value = "@" + name
-		where.values[name] = where.Value
+		value = where.placeholder.Ph()
+		where.values = []interface{}{where.Value}
 	case where.Array != nil:
 		value = "("
 		length := len(where.Array)
 		for i, item := range where.Array {
-			name := where.name(where.Field + (string)(i))
-			value += "@" + name
-			where.values[name] = item
+			value += where.placeholder.Ph()
+			where.values = append(where.values, item)
 			if i != length-1 {
 				value += ", "
 			}
@@ -79,8 +80,4 @@ func (where *BaseWhere) String() string {
 	}
 
 	return helpers.Implode([]string{where.Field, where.Op, value}, " ")
-}
-
-func (where *BaseWhere) name(field string) string {
-	return field + "-" + helpers.RandString(5)
 }
