@@ -1,4 +1,4 @@
-package mysql
+package pgsql
 
 import (
 	. "testing"
@@ -20,11 +20,11 @@ func TestForQuery(t *T) {
 	builder = New()
 	builder.From("users")
 	builder.Where("name", "yang-zzhong")
-	if "SELECT * FROM users WHERE name = ?" != builder.ForQuery() {
+	if "SELECT * FROM users WHERE name = $1" != builder.ForQuery() {
 		t.Error("Where Error")
 	}
 	builder.Where("age", GT, "15")
-	form := "SELECT * FROM users WHERE name = ? AND age > ?"
+	form := "SELECT * FROM users WHERE name = $1 AND age > $2"
 	if form != builder.ForQuery() {
 		t.Error("Where And Error")
 	}
@@ -36,7 +36,7 @@ func TestForQuery(t *T) {
 		builder.Where("age", GT, "50")
 		builder.Or().Where("age", LT, "10")
 	})
-	form = "SELECT * FROM users WHERE name = ? AND (age > ? OR age < ?)"
+	form = "SELECT * FROM users WHERE name = $1 AND (age > $2 OR age < $3)"
 	if form != builder.ForQuery() {
 		t.Error("QWhere Error")
 	}

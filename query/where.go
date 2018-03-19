@@ -58,13 +58,13 @@ func (where *BaseWhere) String() string {
 		value = "(" + where.Query.ForQuery() + ")"
 		where.values = where.Query.Params()
 	case where.Value != "":
-		value = where.placeholder.Ph()
+		value = where.placeholder.PrePh()
 		where.values = []interface{}{where.Value}
 	case where.Array != nil:
 		value = "("
 		length := len(where.Array)
 		for i, item := range where.Array {
-			value += where.placeholder.Ph()
+			value += where.placeholder.PrePh()
 			where.values = append(where.values, item)
 			if i != length-1 {
 				value += ", "

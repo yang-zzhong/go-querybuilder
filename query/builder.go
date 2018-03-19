@@ -2,6 +2,7 @@ package query
 
 import (
 	helpers "github.com/yang-zzhong/go-helpers"
+	"regexp"
 	"strconv"
 )
 
@@ -264,7 +265,7 @@ func (builder *BaseBuilder) ForQuery() string {
 		sql += " OFFSET " + strconv.Itoa(builder.offset)
 	}
 
-	return sql
+	return replace(builder.ph, sql)
 }
 
 func (builder *BaseBuilder) ForRemove() string {
@@ -279,7 +280,7 @@ func (builder *BaseBuilder) ForRemove() string {
 		sql += " OFFSET " + strconv.Itoa(builder.offset)
 	}
 
-	return sql
+	return replace(builder.ph, sql)
 }
 
 func (builder *BaseBuilder) ForUpdate(data map[string]string) string {
@@ -287,7 +288,7 @@ func (builder *BaseBuilder) ForUpdate(data map[string]string) string {
 	length := len(data)
 	i := 1
 	for field, value := range data {
-		sql += field + "=" + builder.ph.Ph()
+		sql += field + "=" + builder.ph.PrePh()
 		builder.values = append(builder.values, value)
 		if i < length {
 			sql += ", "
@@ -304,7 +305,7 @@ func (builder *BaseBuilder) ForUpdate(data map[string]string) string {
 		sql += " OFFSET " + strconv.Itoa(builder.offset)
 	}
 
-	return sql
+	return replace(builder.ph, sql)
 }
 
 func (builder *BaseBuilder) makeWhere(args []string) Where {
@@ -385,4 +386,17 @@ func addAnd(wheres []string, last string) []string {
 	}
 
 	return wheres
+}
+
+func replace(ph Placeholder, src string) string {
+	bSrc := ([]byte)(src)
+	search := regexp.MustCompile(ph.PrePh())
+	i := 1
+	result := search.ReplaceAllFunc(bSrc, func(matched []byte) []byte {
+		res := ph.Ph(strconv.Itoa(i))
+		i++
+		return ([]byte)(res)
+	})
+
+	return (string)(result)
 }

@@ -1,11 +1,11 @@
-package mysql
-
-import (
-	"yang-zzhong/helpers"
-)
+package pgsql
 
 type PgsqlPlaceholder struct{}
 
-func (ph *PgsqlPlaceholder) Ph() string {
-	return "$" + helpers.RandString(10)
+func (ph *PgsqlPlaceholder) Ph(name string) string {
+	return "$" + name
+}
+
+func (ph *PgsqlPlaceholder) PrePh() string {
+	return "__@__"
 }

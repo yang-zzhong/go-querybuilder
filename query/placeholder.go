@@ -1,5 +1,6 @@
 package query
 
 type Placeholder interface {
-	Ph() string
+	Ph(name string) string
+	PrePh() string
 }
