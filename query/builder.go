@@ -75,6 +75,8 @@ type Builder interface {
 
 	Offset(offset int) Builder
 
+	Replace(replace bool) Builder
+
 	// execute select query
 	ForQuery() string
 
@@ -91,12 +93,12 @@ const (
 )
 
 const (
-	T_WHERE = iota
-	T_RAW
-	T_QUOTE_BEGIN
-	T_QUOTE_END
-	T_AND
-	T_OR
+	t_WHERE = iota
+	t_RAW
+	t_QUOTE_BEGIN
+	t_QUOTE_END
+	t_AND
+	t_OR
 )
 
 type Condition struct {
@@ -130,6 +132,8 @@ type BaseBuilder struct {
 	offset int
 
 	ph Placeholder
+
+	replace bool
 }
 
 func InitBuilder(builder *BaseBuilder, where WhereFactory, ph Placeholder) {
@@ -138,11 +142,16 @@ func InitBuilder(builder *BaseBuilder, where WhereFactory, ph Placeholder) {
 	builder.selects = []string{"*"}
 	builder.orders = make(map[string]string)
 	builder.whereFactory = where
-	// builder.values = make(map[string]string)
 	builder.values = []interface{}{}
 	builder.limit = -1
 	builder.offset = -1
 	builder.ph = ph
+	builder.replace = true
+}
+
+func (builder *BaseBuilder) Replace(replace bool) Builder {
+	builder.replace = replace
+	return builder
 }
 
 func (builder *BaseBuilder) From(table string) Builder {
@@ -162,23 +171,23 @@ func (builder *BaseBuilder) OrderBy(field string, order string) Builder {
 
 func (builder *BaseBuilder) Where(args ...string) Builder {
 	where := builder.makeWhere(args)
-	builder.conditions = append(builder.conditions, Condition{T_WHERE, where.Id()})
+	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
 
 	return builder
 }
 
 func (builder *BaseBuilder) WhereRaw(raw string) Builder {
-	condition := Condition{T_RAW, raw}
+	condition := Condition{t_RAW, raw}
 	builder.conditions = append(builder.conditions, condition)
 
 	return builder
 }
 
 func (builder *BaseBuilder) QWhere(call QuoteWhere) Builder {
-	builder.conditions = append(builder.conditions, Condition{T_QUOTE_BEGIN, ""})
+	builder.conditions = append(builder.conditions, Condition{t_QUOTE_BEGIN, ""})
 	call(builder)
-	builder.conditions = append(builder.conditions, Condition{T_QUOTE_END, ""})
+	builder.conditions = append(builder.conditions, Condition{t_QUOTE_END, ""})
 
 	return builder
 }
@@ -193,27 +202,27 @@ func (builder *BaseBuilder) WhereNotInQuery(field string, ins Builder) Builder {
 
 func (builder *BaseBuilder) WhereQuery(field string, op string, other Builder) Builder {
 	where := builder.makeQueryWhere(field, op, other)
-	builder.conditions = append(builder.conditions, Condition{T_WHERE, where.Id()})
+	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
 
 	return builder
 }
 
 func (builder *BaseBuilder) And() Builder {
-	builder.conditions = append(builder.conditions, Condition{T_QUOTE_END, ""})
+	builder.conditions = append(builder.conditions, Condition{t_QUOTE_END, ""})
 
 	return builder
 }
 
 func (builder *BaseBuilder) Or() Builder {
-	builder.conditions = append(builder.conditions, Condition{T_OR, ""})
+	builder.conditions = append(builder.conditions, Condition{t_OR, ""})
 
 	return builder
 }
 
 func (builder *BaseBuilder) WhereIn(field string, ins []string) Builder {
 	where := builder.makeArrayWhere(field, IN, ins)
-	builder.conditions = append(builder.conditions, Condition{T_WHERE, where.Id()})
+	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
 
 	return builder
@@ -221,7 +230,7 @@ func (builder *BaseBuilder) WhereIn(field string, ins []string) Builder {
 
 func (builder *BaseBuilder) WhereNotIn(field string, ins []string) Builder {
 	where := builder.makeArrayWhere(field, NOTIN, ins)
-	builder.conditions = append(builder.conditions, Condition{T_WHERE, where.Id()})
+	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
 
 	return builder
@@ -264,8 +273,11 @@ func (builder *BaseBuilder) ForQuery() string {
 	if builder.offset > -1 {
 		sql += " OFFSET " + strconv.Itoa(builder.offset)
 	}
+	if builder.replace {
+		return replace(builder.ph, sql)
+	}
 
-	return replace(builder.ph, sql)
+	return sql
 }
 
 func (builder *BaseBuilder) ForRemove() string {
@@ -333,7 +345,7 @@ func (builder *BaseBuilder) handleWhere() string {
 			continue
 		}
 		last := wheres[length-1]
-		if condi.t == T_WHERE {
+		if condi.t == t_WHERE {
 			where := builder.wheres[condi.id]
 			wheres = addAnd(wheres, last)
 			wheres = append(wheres, where.String())
@@ -344,16 +356,16 @@ func (builder *BaseBuilder) handleWhere() string {
 		}
 		where := ""
 		switch condi.t {
-		case T_QUOTE_BEGIN:
+		case t_QUOTE_BEGIN:
 			wheres = addAnd(wheres, last)
 			where = "("
-		case T_QUOTE_END:
+		case t_QUOTE_END:
 			where = ")"
-		case T_AND:
+		case t_AND:
 			where = " AND "
-		case T_OR:
+		case t_OR:
 			where = " OR "
-		case T_RAW:
+		case t_RAW:
 			where = condi.id
 		}
 		wheres = append(wheres, where)

@@ -7,6 +7,10 @@ func (ph *MysqlPlaceholder) Ph(name string) string {
 	return name
 }
 
+func (ph *MysqlPlaceholder) PhRegExp() string {
+	return "\\?"
+}
+
 func (ph *MysqlPlaceholder) PrePh() string {
 	return "__@__"
 }

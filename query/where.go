@@ -42,7 +42,6 @@ func InitBaseWhere(where *BaseWhere, ph Placeholder) {
 	where.placeholder = ph
 }
 
-// func (where *BaseWhere) Params() map[string]string {
 func (where *BaseWhere) Params() []interface{} {
 	return where.values
 }
@@ -55,7 +54,8 @@ func (where *BaseWhere) String() string {
 	value := ""
 	switch {
 	case where.Query != nil:
-		value = "(" + where.Query.ForQuery() + ")"
+		sql := where.Query.Replace(false).ForQuery()
+		value = "(" + sql + ")"
 		where.values = where.Query.Params()
 	case where.Value != "":
 		value = where.placeholder.PrePh()
