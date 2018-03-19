@@ -19,9 +19,9 @@ import (
 users := builder.New().From("users")
 users.Select([]string{"name", "id", "age"})
 users.Where("name", LIKE, "%Frank%")
-users.Quote(func (builder Builder) {
-    builder.WhereIn("id", []string{"1", "2", "3"})
-    builder.Or().Where("age", GT, "15")
+users.Quote(func (users Builder) {
+    users.WhereIn("id", []string{"1", "2", "3"})
+    users.Or().Where("age", GT, "15")
 })
 
 // open db
@@ -45,6 +45,7 @@ db.Query(articles.ForQuery(), articles.Params()...)
 ```
 
 update example
+
 ```go
 users := builder.New().From("users")
 users.WhereIn("name", []string{"Stiff", "Chunch"})
