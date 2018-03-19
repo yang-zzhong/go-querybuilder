@@ -38,6 +38,7 @@ users.Where("name", LIKE, "%Frank%")
 
 articles := builder.New().From("articles")
 articles.WhereIn("author_id", users)
+articles.OrderBy("created_at", DESC).Limit(10)
 
 // open db
 db.Query(articles.ForQuery(), articles.Params()...)
