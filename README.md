@@ -16,11 +16,10 @@ import (
     builder "yang-zzhong/database/query/mysql"
 )
 
-builder := builder.New()
-builder.From("users")
-builder.Select([]string{"name", "id", "age"})
-builder.Where("name", LIKE, "%Frank%")
-builder.Quote(func (builder Builder) {
+users := builder.New().From("users")
+users.Select([]string{"name", "id", "age"})
+users.Where("name", LIKE, "%Frank%")
+users.Quote(func (builder Builder) {
     builder.WhereIn("id", []string{"1", "2", "3"})
     builder.Or().Where("age", GT, "15")
 })
