@@ -1,40 +1,70 @@
 # A Database Query Builder
 
+## Feature
+
+1. Support Mysql, Pgsql and easy to support more database
+2. Clear Interface 
+3. Just Compile Sql, Can Use With All database/sql
+
+## Sample
+
+simple query example
+
 ```go
-	builder := query.New()
-	builder.From("users")
-	builder.Select([]string{"name", "age", "from"})
-	builder.Where("name", "young").QWhere(func(builder Builder) {
-		builder.Where("name", "hackyoung")
-		builder.Or()
-		builder.Where("name", "hhyoung")
-	})
-	builder.Where("age", GT, "24")
-	builder.WhereIn("name", []string{"h", "w"})
-	builder.QWhere(func(builder Builder) {
-		q := query.New()
-		q.From("articles")
-		q.Select([]string{"author_id"})
-		q.Where("article_name", "时间简史")
-		builder.WhereInQuery("id", q)
-	})
-	builder.OrderBy("name", ASC)
-	builder.OrderBy("age", DESC)
+import (
+    . "yang-zzhong/database/query"
+    builder "yang-zzhong/database/query/mysql"
+)
 
-	fmt.Println(builder.Query())
+builder := builder.New()
+builder.From("users")
+builder.Select([]string{"name", "id", "age"})
+builder.Where("name", LIKE, "%Frank%")
+builder.Quote(func (builder Builder) {
+    builder.WhereIn("id", []string{"1", "2", "3"})
+    builder.Or().Where("age", GT, "15")
+})
 
-	builder = query.New()
-	builder.From("users")
-	builder.Where("name", "yangzhong")
-	data := make(map[string]string)
-	data["name"] = "yang-zhong"
-	data["age"] = "26"
+// open db
 
-	fmt.Println(builder.Update(data))
+db.Query(builder.ForQuery(), builder.Params()...)
 
-	builder = query.New()
-	builder.From("users")
-	builder.Where("name", "yangzhong")
+```
+query with another table example
+```go
+users := builder.New().From("users")
+users.Select([]string{"id"})
+users.Where("name", LIKE, "%Frank%")
 
-	fmt.Println(builder.Remove())
+articles := builder.New().From("articles")
+articles.WhereIn("author_id", users)
+
+// open db
+db.Query(articles.ForQuery(), articles.Params()...)
+
+```
+
+update example
+```go
+users := builder.New().From("users")
+users.WhereIn("name", []string{"Stiff", "Chunch"})
+
+data := make(map[string]string)
+data["age"] = "50"
+data["name"] = "No Name"
+
+// open db
+db.Exec(users.ForUpdate(data), users.Params()...)
+
+```
+
+remove example
+
+```go
+users := builder.New().From("users")
+user.WhereIn("id", []string{"1", "2", "3"})
+
+// open db
+db.Exec(users.ForRemove(), users.Params()...)
+
 ```

@@ -10,14 +10,14 @@ func main() {
 	builder := query.New()
 	builder.From("users")
 	builder.Select([]string{"name", "age", "from"})
-	builder.Where("name", "young").QWhere(func(builder Builder) {
+	builder.Where("name", "young").Quote(func(builder Builder) {
 		builder.Where("name", "hackyoung")
 		builder.Or()
 		builder.Where("name", "hhyoung")
 	})
 	builder.Where("age", GT, "24")
 	builder.WhereIn("name", []string{"h", "w"})
-	builder.QWhere(func(builder Builder) {
+	builder.Quote(func(builder Builder) {
 		q := query.New()
 		q.From("articles")
 		q.Select([]string{"author_id"})

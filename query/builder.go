@@ -7,7 +7,7 @@ import (
 )
 
 //
-// QWhere's callback type
+// Quote's callback type
 //
 type QuoteWhere func(builder Builder)
 
@@ -30,12 +30,12 @@ type Builder interface {
 
 	// quote a group of condition
 	// # sample
-	// 	 query.QWhere(func(query Builder) {
+	// 	 query.Quote(func(query Builder) {
 	// 		query.Where("hello", "world")
 	// 		query.Or().Where("hello", "dlrow")
 	//   })
 	// will generate `(hello = "world" OR hello = "dlrow")`
-	QWhere(call QuoteWhere) Builder
+	Quote(call QuoteWhere) Builder
 
 	// set a raw condition
 	// # sample
@@ -184,7 +184,7 @@ func (builder *BaseBuilder) WhereRaw(raw string) Builder {
 	return builder
 }
 
-func (builder *BaseBuilder) QWhere(call QuoteWhere) Builder {
+func (builder *BaseBuilder) Quote(call QuoteWhere) Builder {
 	builder.conditions = append(builder.conditions, Condition{t_QUOTE_BEGIN, ""})
 	call(builder)
 	builder.conditions = append(builder.conditions, Condition{t_QUOTE_END, ""})
