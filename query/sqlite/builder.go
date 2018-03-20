@@ -1,18 +1,18 @@
-package pgsql
+package sqlite
 
 import . "godb/query"
 
-type PgsqlBuilder struct {
+type SqliteBuilder struct {
 	BaseBuilder
 }
 
 func New() Builder {
 	baseBuilder := new(BaseBuilder)
 	whereFactory := new(BaseWhereFactory)
-	whereFactory.Ph = new(PgsqlPlaceholder)
+	whereFactory.Ph = new(SqlitePlaceholder)
 	InitBuilder(baseBuilder, whereFactory, whereFactory.Ph)
 
-	builder := new(PgsqlBuilder)
+	builder := new(SqliteBuilder)
 	builder.BaseBuilder = *baseBuilder
 
 	return builder

@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	. "gdb/query"
+	. "godb/query"
 	. "testing"
 )
 

@@ -1,7 +1,7 @@
 package pgsql
 
 import (
-	. "gdb/query"
+	. "godb/query"
 	. "testing"
 )
 

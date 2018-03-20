@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	. "gdb/query"
-	query "gdb/query/pgsql"
+	. "godb/query"
+	query "godb/query/oracle"
 )
 
 func main() {
