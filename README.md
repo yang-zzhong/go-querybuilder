@@ -2,7 +2,7 @@
 
 ## Feature
 
-1. Support Mysql, Pgsql and easy to support more database
+1. Support Mysql, Pgsql, Sqlite, Oracle and easy to support more database
 2. Clear Interface 
 3. Just Compile Sql, Can Use With All database/sql
 
