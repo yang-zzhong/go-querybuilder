@@ -1,6 +1,6 @@
 package pgsql
 
-import . "yang-zzhong/database/query"
+import . "gdb/query"
 
 type PgsqlBuilder struct {
 	BaseBuilder

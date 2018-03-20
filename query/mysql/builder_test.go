@@ -1,8 +1,8 @@
 package mysql
 
 import (
+	. "gdb/query"
 	. "testing"
-	. "yang-zzhong/database/query"
 )
 
 func TestForQuery(t *T) {
@@ -32,7 +32,7 @@ func TestForQuery(t *T) {
 	builder = New()
 	builder.From("users")
 	builder.Where("name", "yang-zzhong")
-	builder.QWhere(func(builder Builder) {
+	builder.Quote(func(builder Builder) {
 		builder.Where("age", GT, "50")
 		builder.Or().Where("age", LT, "10")
 	})

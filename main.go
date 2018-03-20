@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	. "yang-zzhong/database/query"
-	query "yang-zzhong/database/query/pgsql"
+	. "gdb/query"
+	query "gdb/query/pgsql"
 )
 
 func main() {

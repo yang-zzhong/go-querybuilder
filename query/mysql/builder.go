@@ -1,6 +1,6 @@
 package mysql
 
-import . "yang-zzhong/database/query"
+import . "gdb/query"
 
 type MysqlBuilder struct {
 	BaseBuilder
