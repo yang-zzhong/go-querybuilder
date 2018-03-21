@@ -5,16 +5,9 @@ import (
 )
 
 type Queryer struct {
-	BaseBuilder
-
 	model Model
 	conn  interface{}
-}
-
-var conn interface{}
-
-func init() {
-
+	BaseBuilder
 }
 
 func NewQueryer(m Model, db interface{}) {
