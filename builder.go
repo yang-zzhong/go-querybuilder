@@ -1,4 +1,4 @@
-package query
+package querybuilder
 
 import (
 	helpers "github.com/yang-zzhong/go-helpers"
@@ -136,17 +136,20 @@ type BaseBuilder struct {
 	replace bool
 }
 
-func InitBuilder(builder *BaseBuilder, where WhereFactory, ph Placeholder) {
+func NewBuilder(ph Placeholder) Builder {
+	builder := new(BaseBuilder)
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
 	builder.selects = []string{"*"}
 	builder.orders = make(map[string]string)
-	builder.whereFactory = where
+	builder.whereFactory = NewWF(ph)
 	builder.values = []interface{}{}
 	builder.limit = -1
 	builder.offset = -1
 	builder.ph = ph
 	builder.replace = true
+
+	return builder
 }
 
 func (builder *BaseBuilder) Replace(replace bool) Builder {

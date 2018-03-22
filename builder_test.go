@@ -1,13 +1,11 @@
-package mysql
+package querybuilder
 
 import (
-	. "godb/query"
 	. "testing"
 )
 
-func TestForQuery(t *T) {
-
-	builder := New()
+func TestForMysql(t *T) {
+	builder := NewBuilder(&MysqlPlaceholder{})
 	builder.From("users")
 	if "SELECT * FROM users" != builder.ForQuery() {
 		t.Error("From Error")
@@ -16,8 +14,7 @@ func TestForQuery(t *T) {
 	if "SELECT name, age FROM users" != builder.ForQuery() {
 		t.Error("Select Error")
 	}
-
-	builder = New()
+	builder = NewBuilder(&MysqlPlaceholder{})
 	builder.From("users")
 	builder.Where("name", "yang-zzhong")
 	if "SELECT * FROM users WHERE name = ?" != builder.ForQuery() {
@@ -29,7 +26,7 @@ func TestForQuery(t *T) {
 		t.Error("Where And Error")
 	}
 
-	builder = New()
+	builder = NewBuilder(&MysqlPlaceholder{})
 	builder.From("users")
 	builder.Where("name", "yang-zzhong")
 	builder.Quote(func(builder Builder) {

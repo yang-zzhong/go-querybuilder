@@ -1,4 +1,4 @@
-package query
+package querybuilder
 
 import (
 	helpers "github.com/yang-zzhong/go-helpers"
@@ -36,10 +36,13 @@ type BaseWhere struct {
 	placeholder Placeholder
 }
 
-func InitBaseWhere(where *BaseWhere, ph Placeholder) {
+func NewW(ph Placeholder) *BaseWhere {
+	where := new(BaseWhere)
 	where.values = []interface{}{}
 	where.id = helpers.RandString(32)
 	where.placeholder = ph
+
+	return where
 }
 
 func (where *BaseWhere) Params() []interface{} {
