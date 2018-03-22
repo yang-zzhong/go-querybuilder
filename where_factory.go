@@ -1,23 +1,14 @@
 package querybuilder
 
-type WhereFactory interface {
-	New(args []string) Where
-	NewQuery(field string, op string, builder Builder) Where
-	NewArray(field string, op string, array []string) Where
+type WhereFactory struct {
+	modifier Modifier
 }
 
-type BaseWhereFactory struct {
-	ph Placeholder
+func NewWF(modifier Modifier) *WhereFactory {
+	return &WhereFactory{modifier}
 }
 
-func NewWF(ph Placeholder) WhereFactory {
-	wf := new(BaseWhereFactory)
-	wf.ph = ph
-
-	return wf
-}
-
-func (factory *BaseWhereFactory) New(args []string) Where {
+func (factory *WhereFactory) New(args []string) Where {
 	length := len(args)
 	condi := []string{}
 	switch length {
@@ -26,7 +17,7 @@ func (factory *BaseWhereFactory) New(args []string) Where {
 	case 3:
 		condi = args
 	}
-	where := NewW(factory.ph)
+	where := NewW(factory.modifier)
 	where.Field = condi[0]
 	where.Op = condi[1]
 	where.Value = condi[2]
@@ -34,8 +25,8 @@ func (factory *BaseWhereFactory) New(args []string) Where {
 	return where
 }
 
-func (factory *BaseWhereFactory) NewQuery(field string, op string, other Builder) Where {
-	where := NewW(factory.ph)
+func (factory *WhereFactory) NewQuery(field string, op string, other *Builder) Where {
+	where := NewW(factory.modifier)
 	where.Field = field
 	where.Op = op
 	where.Query = other
@@ -43,8 +34,8 @@ func (factory *BaseWhereFactory) NewQuery(field string, op string, other Builder
 	return where
 }
 
-func (factory *BaseWhereFactory) NewArray(field string, op string, array []string) Where {
-	where := NewW(factory.ph)
+func (factory *WhereFactory) NewArray(field string, op string, array []string) Where {
+	where := NewW(factory.modifier)
 	where.Field = field
 	where.Op = op
 	where.Array = array

@@ -9,83 +9,7 @@ import (
 //
 // Quote's callback type
 //
-type QuoteWhere func(builder Builder)
-
-type Builder interface {
-
-	// Select Update OR Delete From whitch table
-	From(tableName string) Builder
-
-	// select columns to fetch, default ["*"]
-	Select(cols []string) Builder
-
-	// Params() map[string]string
-	Params() []interface{}
-	// set query condition
-	// query.Where(field, value)
-	// query.Where(field, op, value)
-	// # sample
-	//		query.Where("age", 12).Where("name", "like", "%young").Where("age", ">", 12)
-	Where(args ...string) Builder
-
-	// quote a group of condition
-	// # sample
-	// 	 query.Quote(func(query Builder) {
-	// 		query.Where("hello", "world")
-	// 		query.Or().Where("hello", "dlrow")
-	//   })
-	// will generate `(hello = "world" OR hello = "dlrow")`
-	Quote(call QuoteWhere) Builder
-
-	// set a raw condition
-	// # sample
-	//	query.WhereRaw("name = \"world\"")
-	WhereRaw(condition string) Builder
-
-	// set in condition, the value is another builder, the builder must select a field
-	// #sample
-	//	anotherQuery.Select("id")
-	//	query.WhereInQuery("id", anotherQuery)
-	WhereInQuery(field string, query Builder) Builder
-
-	// same as WhereInQuery
-	WhereNotInQuery(field string, query Builder) Builder
-
-	// set in condition, the vaue is a slice
-	// #sample
-	//	query.WhereIn("name", []string{"狗蛋", "二狗子"})
-	WhereIn(field string, ins []string) Builder
-
-	// same as WhereIn
-	WhereNotIn(field string, ins []string) Builder
-
-	// or connected two conditions
-	Or() Builder
-
-	// and connected two conditions
-	And() Builder
-
-	// order the result
-	// #sample
-	//	query.OrderBy("name", DESC)
-	//	query.OrderBy("age", ASC)
-	OrderBy(filed string, order string) Builder
-
-	Limit(limit int) Builder
-
-	Offset(offset int) Builder
-
-	Replace(replace bool) Builder
-
-	// execute select query
-	ForQuery() string
-
-	// execute update query
-	ForUpdate(map[string]string) string
-
-	// execute remove query
-	ForRemove() string
-}
+type QuoteWhere func(builder *Builder)
 
 const (
 	DESC string = "DESC"
@@ -106,7 +30,7 @@ type Condition struct {
 	id string // condition id
 }
 
-type BaseBuilder struct {
+type Builder struct {
 	// users
 	table string
 
@@ -123,7 +47,7 @@ type BaseBuilder struct {
 	//
 	orders map[string]string
 
-	whereFactory WhereFactory
+	whereFactory *WhereFactory
 
 	values []interface{}
 
@@ -131,48 +55,48 @@ type BaseBuilder struct {
 
 	offset int
 
-	ph Placeholder
+	modifier Modifier
 
 	replace bool
 }
 
-func NewBuilder(ph Placeholder) Builder {
-	builder := new(BaseBuilder)
+func NewBuilder(modifier Modifier) *Builder {
+	builder := new(Builder)
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
 	builder.selects = []string{"*"}
 	builder.orders = make(map[string]string)
-	builder.whereFactory = NewWF(ph)
+	builder.whereFactory = NewWF(modifier)
 	builder.values = []interface{}{}
 	builder.limit = -1
 	builder.offset = -1
-	builder.ph = ph
+	builder.modifier = modifier
 	builder.replace = true
 
 	return builder
 }
 
-func (builder *BaseBuilder) Replace(replace bool) Builder {
+func (builder *Builder) Replace(replace bool) *Builder {
 	builder.replace = replace
 	return builder
 }
 
-func (builder *BaseBuilder) From(table string) Builder {
+func (builder *Builder) From(table string) *Builder {
 	builder.table = table
 	return builder
 }
 
-func (builder *BaseBuilder) Select(cols []string) Builder {
+func (builder *Builder) Select(cols []string) *Builder {
 	builder.selects = cols
 	return builder
 }
 
-func (builder *BaseBuilder) OrderBy(field string, order string) Builder {
+func (builder *Builder) OrderBy(field string, order string) *Builder {
 	builder.orders[field] = order
 	return builder
 }
 
-func (builder *BaseBuilder) Where(args ...string) Builder {
+func (builder *Builder) Where(args ...string) *Builder {
 	where := builder.makeWhere(args)
 	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
@@ -180,14 +104,14 @@ func (builder *BaseBuilder) Where(args ...string) Builder {
 	return builder
 }
 
-func (builder *BaseBuilder) WhereRaw(raw string) Builder {
+func (builder *Builder) WhereRaw(raw string) *Builder {
 	condition := Condition{t_RAW, raw}
 	builder.conditions = append(builder.conditions, condition)
 
 	return builder
 }
 
-func (builder *BaseBuilder) Quote(call QuoteWhere) Builder {
+func (builder *Builder) Quote(call QuoteWhere) *Builder {
 	builder.conditions = append(builder.conditions, Condition{t_QUOTE_BEGIN, ""})
 	call(builder)
 	builder.conditions = append(builder.conditions, Condition{t_QUOTE_END, ""})
@@ -195,15 +119,15 @@ func (builder *BaseBuilder) Quote(call QuoteWhere) Builder {
 	return builder
 }
 
-func (builder *BaseBuilder) WhereInQuery(field string, ins Builder) Builder {
+func (builder *Builder) WhereInQuery(field string, ins *Builder) *Builder {
 	return builder.WhereQuery(field, IN, ins)
 }
 
-func (builder *BaseBuilder) WhereNotInQuery(field string, ins Builder) Builder {
+func (builder *Builder) WhereNotInQuery(field string, ins *Builder) *Builder {
 	return builder.WhereQuery(field, NOTIN, ins)
 }
 
-func (builder *BaseBuilder) WhereQuery(field string, op string, other Builder) Builder {
+func (builder *Builder) WhereQuery(field string, op string, other *Builder) *Builder {
 	where := builder.makeQueryWhere(field, op, other)
 	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
@@ -211,19 +135,19 @@ func (builder *BaseBuilder) WhereQuery(field string, op string, other Builder) B
 	return builder
 }
 
-func (builder *BaseBuilder) And() Builder {
+func (builder *Builder) And() *Builder {
 	builder.conditions = append(builder.conditions, Condition{t_QUOTE_END, ""})
 
 	return builder
 }
 
-func (builder *BaseBuilder) Or() Builder {
+func (builder *Builder) Or() *Builder {
 	builder.conditions = append(builder.conditions, Condition{t_OR, ""})
 
 	return builder
 }
 
-func (builder *BaseBuilder) WhereIn(field string, ins []string) Builder {
+func (builder *Builder) WhereIn(field string, ins []string) *Builder {
 	where := builder.makeArrayWhere(field, IN, ins)
 	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
@@ -231,7 +155,7 @@ func (builder *BaseBuilder) WhereIn(field string, ins []string) Builder {
 	return builder
 }
 
-func (builder *BaseBuilder) WhereNotIn(field string, ins []string) Builder {
+func (builder *Builder) WhereNotIn(field string, ins []string) *Builder {
 	where := builder.makeArrayWhere(field, NOTIN, ins)
 	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
@@ -239,17 +163,17 @@ func (builder *BaseBuilder) WhereNotIn(field string, ins []string) Builder {
 	return builder
 }
 
-func (builder *BaseBuilder) Limit(limit int) Builder {
+func (builder *Builder) Limit(limit int) *Builder {
 	builder.limit = limit
 	return builder
 }
 
-func (builder *BaseBuilder) Offset(offset int) Builder {
+func (builder *Builder) Offset(offset int) *Builder {
 	builder.offset = offset
 	return builder
 }
 
-func (builder *BaseBuilder) Params() []interface{} {
+func (builder *Builder) Params() []interface{} {
 	result := []interface{}{}
 	for _, val := range builder.values {
 		result = append(result, val)
@@ -258,13 +182,10 @@ func (builder *BaseBuilder) Params() []interface{} {
 	return result
 }
 
-func (builder *BaseBuilder) ForQuery() string {
+func (builder *Builder) ForQuery() string {
 	builder.values = []interface{}{}
-	selects := builder.selects
-	if selects == nil {
-		selects = []string{"*"}
-	}
-	sql := "SELECT " + helpers.Implode(selects, ", ") + " FROM " + builder.table
+	selects := builder.quoteSelects()
+	sql := "SELECT " + helpers.Implode(selects, ", ") + " FROM " + builder.modifier.QuoteName(builder.table)
 	if len(builder.conditions) > 0 {
 		sql += " WHERE " + builder.handleWhere()
 	}
@@ -278,13 +199,26 @@ func (builder *BaseBuilder) ForQuery() string {
 		sql += " OFFSET " + strconv.Itoa(builder.offset)
 	}
 	if builder.replace {
-		return replace(builder.ph, sql)
+		return replace(builder.modifier, sql)
 	}
 
 	return sql
 }
 
-func (builder *BaseBuilder) ForRemove() string {
+func (builder *Builder) quoteTable() string {
+	return builder.modifier.QuoteName(builder.table)
+}
+
+func (builder *Builder) quoteSelects() []string {
+	result := make([]string, len(builder.selects))
+	for i, item := range builder.selects {
+		result[i] = builder.modifier.QuoteName(item)
+	} 
+
+	return result
+}
+
+func (builder *Builder) ForRemove() string {
 	builder.values = []interface{}{}
 	sql := "DELETE FROM " + builder.table
 	if len(builder.conditions) > 0 {
@@ -297,16 +231,16 @@ func (builder *BaseBuilder) ForRemove() string {
 		sql += " OFFSET " + strconv.Itoa(builder.offset)
 	}
 
-	return replace(builder.ph, sql)
+	return replace(builder.modifier, sql)
 }
 
-func (builder *BaseBuilder) ForUpdate(data map[string]string) string {
+func (builder *Builder) ForUpdate(data map[string]string) string {
 	builder.values = []interface{}{}
 	sql := "UPDATE " + builder.table + " SET "
 	length := len(data)
 	i := 1
 	for field, value := range data {
-		sql += field + "=" + builder.ph.PrePh()
+		sql += field + "=" + builder.modifier.PrePh()
 		builder.values = append(builder.values, value)
 		if i < length {
 			sql += ", "
@@ -323,22 +257,22 @@ func (builder *BaseBuilder) ForUpdate(data map[string]string) string {
 		sql += " OFFSET " + strconv.Itoa(builder.offset)
 	}
 
-	return replace(builder.ph, sql)
+	return replace(builder.modifier, sql)
 }
 
-func (builder *BaseBuilder) makeWhere(args []string) Where {
+func (builder *Builder) makeWhere(args []string) Where {
 	return builder.whereFactory.New(args)
 }
 
-func (builder *BaseBuilder) makeQueryWhere(field string, op string, other Builder) Where {
+func (builder *Builder) makeQueryWhere(field string, op string, other *Builder) Where {
 	return builder.whereFactory.NewQuery(field, op, other)
 }
 
-func (builder *BaseBuilder) makeArrayWhere(field string, op string, array []string) Where {
+func (builder *Builder) makeArrayWhere(field string, op string, array []string) Where {
 	return builder.whereFactory.NewArray(field, op, array)
 }
 
-func (builder *BaseBuilder) handleWhere() string {
+func (builder *Builder) handleWhere() string {
 	wheres := []string{}
 	for _, condi := range builder.conditions {
 		length := len(wheres)
@@ -406,12 +340,12 @@ func addAnd(wheres []string, last string) []string {
 	return wheres
 }
 
-func replace(ph Placeholder, src string) string {
+func replace(modifier Modifier, src string) string {
 	bSrc := ([]byte)(src)
-	search := regexp.MustCompile(ph.PrePh())
+	search := regexp.MustCompile(modifier.PrePh())
 	i := 1
 	result := search.ReplaceAllFunc(bSrc, func(matched []byte) []byte {
-		res := ph.Ph(strconv.Itoa(i))
+		res := modifier.Ph(strconv.Itoa(i))
 		i++
 		return ([]byte)(res)
 	})

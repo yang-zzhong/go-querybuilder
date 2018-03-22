@@ -28,19 +28,19 @@ type BaseWhere struct {
 	Field string
 	Op    string
 	Value string
-	Query Builder
+	Query *Builder
 	Array []string
 
 	id          string
 	values      []interface{}
-	placeholder Placeholder
+	modifier Modifier
 }
 
-func NewW(ph Placeholder) *BaseWhere {
+func NewW(modifier Modifier) *BaseWhere {
 	where := new(BaseWhere)
 	where.values = []interface{}{}
 	where.id = helpers.RandString(32)
-	where.placeholder = ph
+	where.modifier = modifier
 
 	return where
 }
@@ -61,13 +61,13 @@ func (where *BaseWhere) String() string {
 		value = "(" + sql + ")"
 		where.values = where.Query.Params()
 	case where.Value != "":
-		value = where.placeholder.PrePh()
+		value = where.modifier.PrePh()
 		where.values = []interface{}{where.Value}
 	case where.Array != nil:
 		value = "("
 		length := len(where.Array)
 		for i, item := range where.Array {
-			value += where.placeholder.PrePh()
+			value += where.modifier.PrePh()
 			where.values = append(where.values, item)
 			if i != length-1 {
 				value += ", "
@@ -76,11 +76,11 @@ func (where *BaseWhere) String() string {
 		value += ")"
 	}
 	if where.Op == NULL || where.Op == NOTNULL {
-		return where.Field + " " + where.Op
+		return where.modifier.QuoteName(where.Field) + " " + where.Op
 	}
 	if where.Op == LIKE {
-		return where.Field + " LIKE " + value
+		return where.modifier.QuoteName(where.Field) + " LIKE " + value
 	}
-
-	return helpers.Implode([]string{where.Field, where.Op, value}, " ")
+	field := where.modifier.QuoteName(where.Field)
+	return helpers.Implode([]string{field, where.Op, value}, " ")
 }
