@@ -259,6 +259,7 @@ func (builder *BaseBuilder) Params() []interface{} {
 }
 
 func (builder *BaseBuilder) ForQuery() string {
+	builder.values = []interface{}{}
 	selects := builder.selects
 	if selects == nil {
 		selects = []string{"*"}
@@ -284,6 +285,7 @@ func (builder *BaseBuilder) ForQuery() string {
 }
 
 func (builder *BaseBuilder) ForRemove() string {
+	builder.values = []interface{}{}
 	sql := "DELETE FROM " + builder.table
 	if len(builder.conditions) > 0 {
 		sql += " WHERE " + builder.handleWhere()
@@ -299,6 +301,7 @@ func (builder *BaseBuilder) ForRemove() string {
 }
 
 func (builder *BaseBuilder) ForUpdate(data map[string]string) string {
+	builder.values = []interface{}{}
 	sql := "UPDATE " + builder.table + " SET "
 	length := len(data)
 	i := 1
