@@ -12,11 +12,10 @@ simple query example
 
 ```go
 import (
-    . "yang-zzhong/database/query"
-    builder "yang-zzhong/database/query/mysql"
+    . "yang-zzhong/go-querybuilder"
 )
 
-users := builder.New().From("users")
+users := NewBuilder(&MysqlPlaceholder{}).From("users")
 users.Select([]string{"name", "id", "age"})
 users.Where("name", LIKE, "%Frank%")
 users.Quote(func (users Builder) {
@@ -25,13 +24,12 @@ users.Quote(func (users Builder) {
 })
 
 // open db
-
-db.Query(builder.ForQuery(), builder.Params()...)
+db.Query(users.ForQuery(), users.Params()...)
 
 ```
 query with another table example
 ```go
-users := builder.New().From("users")
+users := NewBuilder(&MysqlPlaceholder{}).From("users")
 users.Select([]string{"id"})
 users.Where("name", LIKE, "%Frank%")
 
@@ -47,7 +45,7 @@ db.Query(articles.ForQuery(), articles.Params()...)
 update example
 
 ```go
-users := builder.New().From("users")
+users := NewBuilder(&MysqlPlaceholder{}).From("users")
 users.WhereIn("name", []string{"Stiff", "Chunch"})
 
 data := make(map[string]string)
@@ -62,7 +60,7 @@ db.Exec(users.ForUpdate(data), users.Params()...)
 remove example
 
 ```go
-users := builder.New().From("users")
+users := NewBuilder(&MysqlPlaceholder{}).From("users")
 user.WhereIn("id", []string{"1", "2", "3"})
 
 // open db
