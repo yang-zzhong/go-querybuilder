@@ -16,9 +16,9 @@ import (
 )
 
 users := NewBuilder(&MysqlPlaceholder{}).From("users")
-users.Select([]string{"name", "id", "age"})
+users.Select("name", "id", "age")
 users.Where("name", LIKE, "%Frank%")
-users.Quote(func (users Builder) {
+users.Quote(func (users *Builder) {
     users.WhereIn("id", []string{"1", "2", "3"})
     users.Or().Where("age", GT, "15")
 })
@@ -30,7 +30,7 @@ db.Query(users.ForQuery(), users.Params()...)
 query with another table example
 ```go
 users := NewBuilder(&MysqlPlaceholder{}).From("users")
-users.Select([]string{"id"})
+users.Select("id")
 users.Where("name", LIKE, "%Frank%")
 
 articles := builder.New().From("articles")
