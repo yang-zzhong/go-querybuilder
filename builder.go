@@ -165,7 +165,7 @@ func (builder *Builder) ForRemove() string {
 	return replace(builder.modifier, sql)
 }
 
-func (builder *Builder) ForInsert(data []map[string]string) string {
+func (builder *Builder) ForInsert(data []map[string]interface{}) string {
 	sql := "INSERT INTO " + builder.QuotedTableName()
 	fields := []string{}
 	values := []string{}

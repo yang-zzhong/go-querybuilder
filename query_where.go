@@ -30,7 +30,7 @@ type QueryWhere interface {
 //	Where("name", LIKE "Young%").
 //	Where("id", 1)
 //
-func (builder *Builder) Where(args ...string) *Builder {
+func (builder *Builder) Where(args ...interface{}) *Builder {
 	where := builder.makeWhere(args)
 	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
@@ -120,7 +120,7 @@ func (builder *Builder) WhereNotIn(field string, ins []string) *Builder {
 	return builder
 }
 
-func (builder *Builder) makeWhere(args []string) Where {
+func (builder *Builder) makeWhere(args []interface{}) Where {
 	return builder.whereFactory.New(args)
 }
 
