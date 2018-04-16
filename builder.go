@@ -1,7 +1,6 @@
 package querybuilder
 
 import (
-	"strconv"
 	str "strings"
 )
 
@@ -120,10 +119,12 @@ func (builder *Builder) ForQuery() string {
 		sql += " " + builder.group
 	}
 	if builder.limit > -1 {
-		sql += " LIMIT " + strconv.Itoa(builder.limit)
+		sql += " LIMIT " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.limit)
 	}
 	if builder.offset > -1 {
-		sql += " OFFSET " + strconv.Itoa(builder.offset)
+		sql += " OFFSET " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.offset)
 	}
 	if builder.replace {
 		return replace(builder.modifier, sql)
@@ -156,10 +157,12 @@ func (builder *Builder) ForRemove() string {
 		sql += " WHERE " + builder.handleWhere()
 	}
 	if builder.limit > -1 {
-		sql += " LIMIT " + strconv.Itoa(builder.limit)
+		sql += " LIMIT " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.limit)
 	}
 	if builder.offset > -1 {
-		sql += " OFFSET " + strconv.Itoa(builder.offset)
+		sql += " OFFSET " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.offset)
 	}
 
 	return replace(builder.modifier, sql)
@@ -187,7 +190,7 @@ func (builder *Builder) ForInsert(data []map[string]interface{}) string {
 	return replace(builder.modifier, sql)
 }
 
-func (builder *Builder) ForUpdate(data map[string]string) string {
+func (builder *Builder) ForUpdate(data map[string]interface{}) string {
 	builder.values = []interface{}{}
 	sql := "UPDATE " + builder.QuotedTableName() + " SET "
 	length := len(data)
@@ -204,10 +207,12 @@ func (builder *Builder) ForUpdate(data map[string]string) string {
 		sql += " WHERE " + builder.handleWhere()
 	}
 	if builder.limit > -1 {
-		sql += " LIMIT " + strconv.Itoa(builder.limit)
+		sql += " LIMIT " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.limit)
 	}
 	if builder.offset > -1 {
-		sql += " OFFSET " + strconv.Itoa(builder.offset)
+		sql += " OFFSET " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.offset)
 	}
 
 	return replace(builder.modifier, sql)
