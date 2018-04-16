@@ -165,6 +165,28 @@ func (builder *Builder) ForRemove() string {
 	return replace(builder.modifier, sql)
 }
 
+func (builder *Builder) ForInsert(data []map[string]string) string {
+	sql := "INSERT INTO " + builder.QuotedTableName()
+	fields := []string{}
+	values := []string{}
+	builder.values = []interface{}{}
+	for i, row := range data {
+		rowValue := []string{}
+		for field, value := range row {
+			if i == 0 {
+				fields = append(fields, builder.modifier.QuoteName(field))
+			}
+			rowValue = append(rowValue, builder.modifier.PrePh())
+			builder.values = append(builder.values, value)
+		}
+		values = append(values, "("+str.Join(rowValue, ", ")+")")
+	}
+	sql += "(" + str.Join(fields, ", ") + ")"
+	sql += " VALUES" + str.Join(values, ", ")
+
+	return replace(builder.modifier, sql)
+}
+
 func (builder *Builder) ForUpdate(data map[string]string) string {
 	builder.values = []interface{}{}
 	sql := "UPDATE " + builder.QuotedTableName() + " SET "

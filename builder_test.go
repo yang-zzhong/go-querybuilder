@@ -1,6 +1,7 @@
 package querybuilder
 
 import (
+	"fmt"
 	. "testing"
 )
 
@@ -37,4 +38,13 @@ func TestForMysql(t *T) {
 	if form != builder.ForQuery() {
 		t.Error("QWhere Error")
 	}
+	data := []map[string]string{}
+	for i := 0; i < 10; i++ {
+		row := make(map[string]string)
+		row["name"] = "young"
+		row["age"] = "15"
+		data = append(data, row)
+	}
+	fmt.Println(builder.ForInsert(data))
+	fmt.Println(builder.Params())
 }
