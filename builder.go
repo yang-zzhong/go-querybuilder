@@ -62,18 +62,21 @@ type Builder struct {
 
 func NewBuilder(modifier Modifier) *Builder {
 	builder := new(Builder)
+	builder.modifier = modifier
+	builder.Init()
+	return builder
+}
+
+func (builder *Builder) Init() {
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
 	builder.selects = []column{column{"*", true}}
 	builder.orders = make(map[string]string)
-	builder.whereFactory = NewWF(modifier)
+	builder.whereFactory = NewWF(builder.modifier)
 	builder.values = []interface{}{}
 	builder.limit = -1
 	builder.offset = -1
-	builder.modifier = modifier
 	builder.replace = true
-
-	return builder
 }
 
 func (builder *Builder) From(tableName string) *Builder {
