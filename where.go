@@ -28,7 +28,7 @@ type Where interface {
 type BaseWhere struct {
 	Field string
 	Op    string
-	Value string
+	Value interface{}
 	Query *Builder
 	Array []string
 

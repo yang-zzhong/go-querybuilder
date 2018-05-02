@@ -1,6 +1,7 @@
 package querybuilder
 
 import (
+	"fmt"
 	. "testing"
 )
 
@@ -20,7 +21,7 @@ func TestForMysql(t *T) {
 	if "SELECT `*` FROM `users` WHERE `name` = ?" != builder.ForQuery() {
 		t.Error("Where Error")
 	}
-	builder.Where("age", GT, "15")
+	builder.Where("age", GT, 15)
 	form := "SELECT `*` FROM `users` WHERE `name` = ? AND `age` > ?"
 	if form != builder.ForQuery() {
 		t.Error("Where And Error")
@@ -30,11 +31,20 @@ func TestForMysql(t *T) {
 	builder.From("users")
 	builder.Where("name", "yang-zzhong")
 	builder.Quote(func(builder *Builder) {
-		builder.Where("age", GT, "50")
-		builder.Or().Where("age", LT, "10")
+		builder.Where("age", GT, 50)
+		builder.Or().Where("age", LT, 10)
 	})
 	form = "SELECT `*` FROM `users` WHERE `name` = ? AND (`age` > ? OR `age` < ?)"
 	if form != builder.ForQuery() {
 		t.Error("QWhere Error")
 	}
+	data := []map[string]interface{}{}
+	for i := 0; i < 10; i++ {
+		row := make(map[string]interface{})
+		row["name"] = "young"
+		row["age"] = 15
+		data = append(data, row)
+	}
+	fmt.Println(builder.ForInsert(data))
+	fmt.Println(builder.Params())
 }

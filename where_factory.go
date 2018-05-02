@@ -8,18 +8,18 @@ func NewWF(modifier Modifier) *WhereFactory {
 	return &WhereFactory{modifier}
 }
 
-func (factory *WhereFactory) New(args []string) Where {
+func (factory *WhereFactory) New(args []interface{}) Where {
 	length := len(args)
-	condi := []string{}
+	condi := []interface{}{}
 	switch length {
 	case 2:
-		condi = []string{args[0], "=", args[1]}
+		condi = []interface{}{args[0], "=", args[1]}
 	case 3:
 		condi = args
 	}
 	where := NewW(factory.modifier)
-	where.Field = condi[0]
-	where.Op = condi[1]
+	where.Field = condi[0].(string)
+	where.Op = condi[1].(string)
 	where.Value = condi[2]
 
 	return where

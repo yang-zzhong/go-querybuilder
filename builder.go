@@ -1,7 +1,6 @@
 package querybuilder
 
 import (
-	"strconv"
 	str "strings"
 )
 
@@ -63,18 +62,21 @@ type Builder struct {
 
 func NewBuilder(modifier Modifier) *Builder {
 	builder := new(Builder)
+	builder.modifier = modifier
+	builder.Init()
+	return builder
+}
+
+func (builder *Builder) Init() {
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
 	builder.selects = []column{column{"*", false}}
 	builder.orders = make(map[string]string)
-	builder.whereFactory = NewWF(modifier)
+	builder.whereFactory = NewWF(builder.modifier)
 	builder.values = []interface{}{}
 	builder.limit = -1
 	builder.offset = -1
-	builder.modifier = modifier
 	builder.replace = true
-
-	return builder
 }
 
 func (builder *Builder) From(tableName string) *Builder {
@@ -120,10 +122,12 @@ func (builder *Builder) ForQuery() string {
 		sql += " " + builder.group
 	}
 	if builder.limit > -1 {
-		sql += " LIMIT " + strconv.Itoa(builder.limit)
+		sql += " LIMIT " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.limit)
 	}
 	if builder.offset > -1 {
-		sql += " OFFSET " + strconv.Itoa(builder.offset)
+		sql += " OFFSET " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.offset)
 	}
 	if builder.replace {
 		return replace(builder.modifier, sql)
@@ -156,16 +160,40 @@ func (builder *Builder) ForRemove() string {
 		sql += " WHERE " + builder.handleWhere()
 	}
 	if builder.limit > -1 {
-		sql += " LIMIT " + strconv.Itoa(builder.limit)
+		sql += " LIMIT " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.limit)
 	}
 	if builder.offset > -1 {
-		sql += " OFFSET " + strconv.Itoa(builder.offset)
+		sql += " OFFSET " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.offset)
 	}
 
 	return replace(builder.modifier, sql)
 }
 
-func (builder *Builder) ForUpdate(data map[string]string) string {
+func (builder *Builder) ForInsert(data []map[string]interface{}) string {
+	sql := "INSERT INTO " + builder.QuotedTableName()
+	fields := []string{}
+	values := []string{}
+	builder.values = []interface{}{}
+	for i, row := range data {
+		rowValue := []string{}
+		for field, value := range row {
+			if i == 0 {
+				fields = append(fields, builder.modifier.QuoteName(field))
+			}
+			rowValue = append(rowValue, builder.modifier.PrePh())
+			builder.values = append(builder.values, value)
+		}
+		values = append(values, "("+str.Join(rowValue, ", ")+")")
+	}
+	sql += "(" + str.Join(fields, ", ") + ")"
+	sql += " VALUES" + str.Join(values, ", ")
+
+	return replace(builder.modifier, sql)
+}
+
+func (builder *Builder) ForUpdate(data map[string]interface{}) string {
 	builder.values = []interface{}{}
 	sql := "UPDATE " + builder.QuotedTableName() + " SET "
 	length := len(data)
@@ -182,10 +210,12 @@ func (builder *Builder) ForUpdate(data map[string]string) string {
 		sql += " WHERE " + builder.handleWhere()
 	}
 	if builder.limit > -1 {
-		sql += " LIMIT " + strconv.Itoa(builder.limit)
+		sql += " LIMIT " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.limit)
 	}
 	if builder.offset > -1 {
-		sql += " OFFSET " + strconv.Itoa(builder.offset)
+		sql += " OFFSET " + builder.modifier.PrePh()
+		builder.values = append(builder.values, builder.offset)
 	}
 
 	return replace(builder.modifier, sql)
