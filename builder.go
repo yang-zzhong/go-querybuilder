@@ -65,7 +65,7 @@ func NewBuilder(modifier Modifier) *Builder {
 	builder := new(Builder)
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
-	builder.selects = []column{column{"*", true}}
+	builder.selects = []column{column{"*", false}}
 	builder.orders = make(map[string]string)
 	builder.whereFactory = NewWF(modifier)
 	builder.values = []interface{}{}
