@@ -30,7 +30,7 @@ type BaseWhere struct {
 	Op    string
 	Value interface{}
 	Query *Builder
-	Array []string
+	Array []interface{}
 
 	id       string
 	values   []interface{}

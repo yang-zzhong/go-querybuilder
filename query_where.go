@@ -7,7 +7,7 @@ import (
 type QueryWhere interface {
 	Where(...string) *Builder
 	WhereRaw(string) *Builder
-	WhereIn(string, []string) *Builder
+	WhereIn(string, []interface{}) *Builder
 	WhereNotIn(string, []string) *Builder
 	WhereQuery(string, string, *Builder) *Builder
 	WhereInQuery(string, *Builder) *Builder
@@ -104,7 +104,7 @@ func (builder *Builder) Or() *Builder {
 	return builder
 }
 
-func (builder *Builder) WhereIn(field string, ins []string) *Builder {
+func (builder *Builder) WhereIn(field string, ins []interface{}) *Builder {
 	where := builder.makeArrayWhere(field, IN, ins)
 	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
@@ -112,7 +112,7 @@ func (builder *Builder) WhereIn(field string, ins []string) *Builder {
 	return builder
 }
 
-func (builder *Builder) WhereNotIn(field string, ins []string) *Builder {
+func (builder *Builder) WhereNotIn(field string, ins []interface{}) *Builder {
 	where := builder.makeArrayWhere(field, NOTIN, ins)
 	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
@@ -128,7 +128,7 @@ func (builder *Builder) makeQueryWhere(field string, op string, other *Builder) 
 	return builder.whereFactory.NewQuery(field, op, other)
 }
 
-func (builder *Builder) makeArrayWhere(field string, op string, array []string) Where {
+func (builder *Builder) makeArrayWhere(field string, op string, array []interface{}) Where {
 	return builder.whereFactory.NewArray(field, op, array)
 }
 
