@@ -36,13 +36,15 @@ type Builder struct {
 
 	wheres map[string]Where
 
-	// ["name", "age"]
-	// ["*"]
+	/**
+	 * ["name", "age"]
+	 * ["*"]
+	 */
 	selects []column
 
-	//
-	// ["age" => "desc"]
-	//
+	/**
+	 * ["age" => "desc"]
+	 */
 	orders map[string]string
 
 	whereFactory *WhereFactory
@@ -58,6 +60,8 @@ type Builder struct {
 	group string
 
 	replace bool
+
+	real bool
 }
 
 func NewBuilder(modifier Modifier) *Builder {
@@ -70,13 +74,18 @@ func NewBuilder(modifier Modifier) *Builder {
 func (builder *Builder) Init() {
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
-	builder.selects = []column{column{"*", false}}
+	builder.selects = []column{{"*", false}}
 	builder.orders = make(map[string]string)
 	builder.whereFactory = NewWF(builder.modifier)
 	builder.values = []interface{}{}
 	builder.limit = -1
 	builder.offset = -1
 	builder.replace = true
+}
+
+func (builder *Builder) SetIsReal(real bool) *Builder {
+	builder.real = real
+	return builder
 }
 
 func (builder *Builder) From(tableName string) *Builder {
@@ -130,10 +139,9 @@ func (builder *Builder) ForQuery() string {
 		builder.values = append(builder.values, builder.offset)
 	}
 	if builder.replace {
-		return replace(builder.modifier, sql)
+		sql = replace(builder.modifier, sql)
 	}
-
-	return sql
+	return builder.toSql(sql)
 }
 
 func (builder *Builder) QuotedTableName() string {
@@ -168,7 +176,7 @@ func (builder *Builder) ForRemove() string {
 		builder.values = append(builder.values, builder.offset)
 	}
 
-	return replace(builder.modifier, sql)
+	return builder.toSql(replace(builder.modifier, sql))
 }
 
 func (builder *Builder) ForInsert(data []map[string]interface{}) string {
@@ -190,7 +198,7 @@ func (builder *Builder) ForInsert(data []map[string]interface{}) string {
 	sql += "(" + str.Join(fields, ", ") + ")"
 	sql += " VALUES" + str.Join(values, ", ")
 
-	return replace(builder.modifier, sql)
+	return builder.toSql(replace(builder.modifier, sql))
 }
 
 func (builder *Builder) ForUpdate(data map[string]interface{}) string {
@@ -218,7 +226,17 @@ func (builder *Builder) ForUpdate(data map[string]interface{}) string {
 		builder.values = append(builder.values, builder.offset)
 	}
 
-	return replace(builder.modifier, sql)
+	return builder.toSql(replace(builder.modifier, sql))
+}
+
+func (builder *Builder) toSql(sql string) string {
+	if !builder.real {
+		return sql
+	}
+	for _, val := range builder.Params() {
+		sql = str.Replace(sql, builder.modifier.Ph(""), val.(string), 1)
+	}
+	return sql
 }
 
 func handleOrderBy(orders map[string]string) string {
