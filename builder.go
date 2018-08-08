@@ -61,7 +61,7 @@ type Builder struct {
 
 	replace bool
 
-	isPrepare bool
+	real bool
 }
 
 func NewBuilder(modifier Modifier) *Builder {
@@ -83,8 +83,8 @@ func (builder *Builder) Init() {
 	builder.replace = true
 }
 
-func (builder *Builder) SetIsPrepare(isPrepare bool) *Builder {
-	builder.isPrepare = isPrepare
+func (builder *Builder) SetIsReal(real bool) *Builder {
+	builder.real = real
 	return builder
 }
 
@@ -230,7 +230,7 @@ func (builder *Builder) ForUpdate(data map[string]interface{}) string {
 }
 
 func (builder *Builder) toSql(sql string) string {
-	if !builder.isPrepare {
+	if !builder.real {
 		return sql
 	}
 	for _, val := range builder.Params() {
