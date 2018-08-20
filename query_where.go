@@ -136,14 +136,6 @@ func (builder *Builder) handleWhere() string {
 	wheres := []string{}
 	for _, condi := range builder.conditions {
 		length := len(wheres)
-		// if length == 0 {
-		// 	where := builder.wheres[condi.id]
-		// 	wheres = append(wheres, where.String())
-		// 	for _, value := range where.Params() {
-		// 		builder.values = append(builder.values, value)
-		// 	}
-		// 	continue
-		// }
 		last := ""
 		if length > 0 {
 			last = wheres[length-1]
@@ -155,6 +147,11 @@ func (builder *Builder) handleWhere() string {
 			for _, value := range where.Params() {
 				builder.values = append(builder.values, value)
 			}
+			continue
+		}
+		if condi.t == t_RAW {
+			wheres = addAnd(wheres, last)
+			wheres = append(wheres, condi.id)
 			continue
 		}
 		where := ""
