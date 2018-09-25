@@ -115,11 +115,11 @@ func (builder *Builder) ForQuery() string {
 	if len(builder.conditions) > 0 {
 		sql += " WHERE " + builder.handleWhere()
 	}
-	if len(builder.orders) > 0 {
-		sql += handleOrderBy(builder.orders)
-	}
 	if builder.group != "" {
 		sql += " " + builder.group
+	}
+	if len(builder.orders) > 0 {
+		sql += handleOrderBy(builder.orders)
 	}
 	if builder.limit > -1 {
 		sql += " LIMIT " + builder.modifier.PrePh()
