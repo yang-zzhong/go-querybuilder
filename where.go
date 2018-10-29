@@ -30,7 +30,7 @@ type BaseWhere struct {
 	Op    string
 	Value interface{}
 	Query *Builder
-	Array []string
+	Array []interface{}
 
 	id       string
 	values   []interface{}
@@ -56,12 +56,13 @@ func (where *BaseWhere) Id() string {
 
 func (where *BaseWhere) String() string {
 	value := ""
+	where.values = []interface{}{}
 	switch {
 	case where.Query != nil:
 		sql := where.Query.Replace(false).ForQuery()
 		value = "(" + sql + ")"
 		where.values = where.Query.Params()
-	case where.Array != nil:
+	case where.Array != nil && len(where.Array) > 0:
 		value = "("
 		length := len(where.Array)
 		for i, item := range where.Array {

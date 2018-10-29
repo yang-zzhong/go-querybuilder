@@ -34,7 +34,7 @@ func (factory *WhereFactory) NewQuery(field string, op string, other *Builder) W
 	return where
 }
 
-func (factory *WhereFactory) NewArray(field string, op string, array []string) Where {
+func (factory *WhereFactory) NewArray(field string, op string, array []interface{}) Where {
 	where := NewW(factory.modifier)
 	where.Field = field
 	where.Op = op

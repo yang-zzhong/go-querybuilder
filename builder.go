@@ -70,7 +70,7 @@ func NewBuilder(modifier Modifier) *Builder {
 func (builder *Builder) Init() {
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
-	builder.selects = []column{column{"*", true}}
+	builder.selects = []column{column{"*", false}}
 	builder.orders = make(map[string]string)
 	builder.whereFactory = NewWF(builder.modifier)
 	builder.values = []interface{}{}
@@ -115,11 +115,11 @@ func (builder *Builder) ForQuery() string {
 	if len(builder.conditions) > 0 {
 		sql += " WHERE " + builder.handleWhere()
 	}
-	if len(builder.orders) > 0 {
-		sql += handleOrderBy(builder.orders)
-	}
 	if builder.group != "" {
 		sql += " " + builder.group
+	}
+	if len(builder.orders) > 0 {
+		sql += handleOrderBy(builder.orders)
 	}
 	if builder.limit > -1 {
 		sql += " LIMIT " + builder.modifier.PrePh()

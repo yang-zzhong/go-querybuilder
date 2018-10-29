@@ -7,7 +7,7 @@ import (
 type QueryWhere interface {
 	Where(...string) *Builder
 	WhereRaw(string) *Builder
-	WhereIn(string, []string) *Builder
+	WhereIn(string, []interface{}) *Builder
 	WhereNotIn(string, []string) *Builder
 	WhereQuery(string, string, *Builder) *Builder
 	WhereInQuery(string, *Builder) *Builder
@@ -104,7 +104,7 @@ func (builder *Builder) Or() *Builder {
 	return builder
 }
 
-func (builder *Builder) WhereIn(field string, ins []string) *Builder {
+func (builder *Builder) WhereIn(field string, ins []interface{}) *Builder {
 	where := builder.makeArrayWhere(field, IN, ins)
 	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
@@ -112,7 +112,7 @@ func (builder *Builder) WhereIn(field string, ins []string) *Builder {
 	return builder
 }
 
-func (builder *Builder) WhereNotIn(field string, ins []string) *Builder {
+func (builder *Builder) WhereNotIn(field string, ins []interface{}) *Builder {
 	where := builder.makeArrayWhere(field, NOTIN, ins)
 	builder.conditions = append(builder.conditions, Condition{t_WHERE, where.Id()})
 	builder.wheres[where.Id()] = where
@@ -128,7 +128,7 @@ func (builder *Builder) makeQueryWhere(field string, op string, other *Builder) 
 	return builder.whereFactory.NewQuery(field, op, other)
 }
 
-func (builder *Builder) makeArrayWhere(field string, op string, array []string) Where {
+func (builder *Builder) makeArrayWhere(field string, op string, array []interface{}) Where {
 	return builder.whereFactory.NewArray(field, op, array)
 }
 
@@ -136,15 +136,10 @@ func (builder *Builder) handleWhere() string {
 	wheres := []string{}
 	for _, condi := range builder.conditions {
 		length := len(wheres)
-		if length == 0 {
-			where := builder.wheres[condi.id]
-			wheres = append(wheres, where.String())
-			for _, value := range where.Params() {
-				builder.values = append(builder.values, value)
-			}
-			continue
+		last := ""
+		if length > 0 {
+			last = wheres[length-1]
 		}
-		last := wheres[length-1]
 		if condi.t == t_WHERE {
 			where := builder.wheres[condi.id]
 			wheres = addAnd(wheres, last)
@@ -152,6 +147,11 @@ func (builder *Builder) handleWhere() string {
 			for _, value := range where.Params() {
 				builder.values = append(builder.values, value)
 			}
+			continue
+		}
+		if condi.t == t_RAW {
+			wheres = addAnd(wheres, last)
+			wheres = append(wheres, condi.id)
 			continue
 		}
 		where := ""
@@ -175,7 +175,7 @@ func (builder *Builder) handleWhere() string {
 }
 
 func addAnd(wheres []string, last string) []string {
-	if last == "(" {
+	if last == "(" || last == "" {
 		return wheres
 	}
 	if last != " AND " && last != " OR " {
