@@ -61,9 +61,6 @@ func (where *BaseWhere) String() string {
 		sql := where.Query.Replace(false).ForQuery()
 		value = "(" + sql + ")"
 		where.values = where.Query.Params()
-	case where.Value != "":
-		value = where.modifier.PrePh()
-		where.values = []interface{}{where.Value}
 	case where.Array != nil:
 		value = "("
 		length := len(where.Array)
@@ -75,6 +72,9 @@ func (where *BaseWhere) String() string {
 			}
 		}
 		value += ")"
+	default:
+		value = where.modifier.PrePh()
+		where.values = []interface{}{where.Value}
 	}
 	if where.Op == NULL || where.Op == NOTNULL {
 		return where.modifier.QuoteName(where.Field) + " " + where.Op
