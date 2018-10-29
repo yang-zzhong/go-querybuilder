@@ -173,19 +173,21 @@ func (builder *Builder) ForRemove() string {
 
 func (builder *Builder) ForInsert(data []map[string]interface{}) string {
 	fields := []string{}
+	fs := []string{}
 	values := []string{}
 	builder.values = []interface{}{}
 	if len(data) == 0 {
 		return ""
 	}
 	sql := "INSERT INTO " + builder.QuotedTableName()
-	for field, _ := range data[0] {
-		fields = append(fields, builder.modifier.QuoteName(field))
+	for f, _ := range data[0] {
+		fields = append(fields, builder.modifier.QuoteName(f))
+		fs = append(fs, f)
 	}
 	for _, row := range data {
 		rowValue := []string{}
-		for _, field := range fields {
-			value := row[field]
+		for _, f := range fs {
+			value := row[f]
 			rowValue = append(rowValue, builder.modifier.PrePh())
 			builder.values = append(builder.values, value)
 		}
