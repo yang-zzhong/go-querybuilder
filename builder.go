@@ -41,9 +41,9 @@ type Builder struct {
 	selects []column
 
 	//
-	// ["age" => "desc"]
+	// ["age desc", "name desc"]
 	//
-	orders map[string]string
+	orders []string
 
 	whereFactory *WhereFactory
 
@@ -71,7 +71,7 @@ func (builder *Builder) Init() {
 	builder.conditions = []Condition{}
 	builder.wheres = make(map[string]Where)
 	builder.selects = []column{column{"*", false}}
-	builder.orders = make(map[string]string)
+	builder.orders = []string{}
 	builder.whereFactory = NewWF(builder.modifier)
 	builder.values = []interface{}{}
 	builder.limit = -1
@@ -84,8 +84,13 @@ func (builder *Builder) From(tableName string) *Builder {
 	return builder
 }
 
+func (builder *Builder) Order(e string) *Builder {
+	builder.orders = append(builder.orders, e)
+	return builder
+}
+
 func (builder *Builder) OrderBy(field string, order string) *Builder {
-	builder.orders[field] = order
+	builder.orders = append(builder.orders, field+" "+order)
 	return builder
 }
 
@@ -227,12 +232,12 @@ func (builder *Builder) ForUpdate(data map[string]interface{}) string {
 	return replace(builder.modifier, sql)
 }
 
-func handleOrderBy(orders map[string]string) string {
+func handleOrderBy(orders []string) string {
 	sql := " ORDER BY "
 	length := len(orders)
 	i := 1
-	for field, order := range orders {
-		sql += field + " " + order
+	for _, order := range orders {
+		sql += order
 		if i < length {
 			sql += ", "
 		}
