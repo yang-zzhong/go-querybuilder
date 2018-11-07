@@ -73,6 +73,14 @@ func (where *BaseWhere) String() string {
 			}
 		}
 		value += ")"
+	case where.Value == nil:
+		if where.Op == EQ {
+			where.Op = NULL
+		} else if where.Op == NEQ {
+			where.Op = NOTNULL
+		} else {
+			panic(where.Field + " " + where.Op + " nil not allowed")
+		}
 	default:
 		value = where.modifier.PrePh()
 		where.values = []interface{}{where.Value}
