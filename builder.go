@@ -141,6 +141,10 @@ func (builder *Builder) ForQuery() string {
 	return sql
 }
 
+func (builder * Builder) ForQueryToUpdate() string {
+	return builder.ForQuery() + " FOR UPDATE"
+}
+
 func (builder *Builder) QuotedTableName() string {
 	return builder.modifier.QuoteName(builder.tableName)
 }

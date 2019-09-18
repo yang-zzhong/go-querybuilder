@@ -16,6 +16,12 @@ func TestForMysql(t *T) {
 	}
 	builder = NewBuilder(&MysqlModifier{})
 	builder.From("users")
+	builder.Select("name", "age")
+	if "SELECT `name`, `age` FROM `users` FOR UPDATE" != builder.ForQueryToUpdate() {
+		t.Error("Select Error")
+	}
+	builder = NewBuilder(&MysqlModifier{})
+	builder.From("users")
 	builder.Where("name", "yang-zzhong")
 	if "SELECT * FROM `users` WHERE `name` = ?" != builder.ForQuery() {
 		t.Error("Where Error")
@@ -61,6 +67,12 @@ func TestForPostgres(t *T) {
 	}
 	builder.Select("name", "age")
 	if "SELECT \"name\", \"age\" FROM \"users\"" != builder.ForQuery() {
+		t.Error("Select Error")
+	}
+	builder = NewBuilder(&PgsqlModifier{})
+	builder.From("users")
+	builder.Select("name", "age")
+	if "SELECT \"name\", \"age\" FROM \"users\" FOR UPDATE" != builder.ForQueryToUpdate() {
 		t.Error("Select Error")
 	}
 	builder = NewBuilder(&PgsqlModifier{})
